@@ -1,0 +1,92 @@
+/**
+ * @prettier
+ * @copyright (c) 2019 - present, HGC-AB
+ * @licence This source code is licensed under the MIT license described
+ * and found in the LICENSE file in the root directory of this source tree.
+ */
+
+import { Mapper } from '../../../core/infra/Mapper'
+import { UniqueEntityID } from '../../../core/domain/UniqueEntityID'
+import { User } from '../domain/User'
+import { UserName } from '../domain/userName'
+import { UserEmail } from '../domain/userEmail'
+import { UserScope } from '../domain/userScope'
+import { UserCredential } from '../domain/userCredential'
+
+/**
+ * Implements data mapper logic for the User
+ *
+ * The responsibility of a Mapper is to make all the transformations:
+ * - From Domain to DTO
+ * - From Domain to Persistence
+ * - From Persistence to Domain
+ * @class
+ */
+export class UserMap implements Mapper<User> {
+  public static toUserName(raw: any): UserName {
+    const resultUserName = UserName.create(raw.username)
+    return resultUserName.getValue()
+  }
+
+  public static toUserEmail(raw: any): UserEmail {
+    const resultUserName = UserEmail.create(raw.email)
+    return resultUserName.getValue()
+  }
+
+  public static toUserScope(raw: any): UserScope {
+    const resultUserName = UserScope.create(raw.scope)
+    return resultUserName.getValue()
+  }
+
+  public static async toUserCredential(raw: any): Promise<UserCredential> {
+    const resultUserName = await UserCredential.create(raw.credentials.password, true)
+    return resultUserName.getValue()
+  }
+
+  /**
+   * Map raw user data from the data model to a User domain entity
+   * @return {Promise<User>}
+   */
+  public static async toDomain(raw: any): Promise<User> {
+    const rawUser = raw
+
+    const resultUser = User.create(
+      {
+        username: this.toUserName(raw),
+        email: this.toUserEmail(raw),
+        scope: this.toUserScope(raw),
+        credential: await this.toUserCredential(raw),
+        isAdminUser: rawUser.isAdminUser,
+        isDeleted: rawUser.isDeleted,
+        isEmailVerified: rawUser.isEmailVerified,
+      },
+      new UniqueEntityID(rawUser._id)
+    )
+
+    return resultUser.getValue()
+  }
+
+  /**
+   * Map user domain entity to persistent format.
+   *
+   * When saving a new user, the username and the salted and hashed password
+   * should be saved in a separate model - credentials collection, while the
+   * common user properties is stored in the user collection.
+   * @param {User} user
+   * @return {Promise<any>}
+   */
+  public static async toPersistence(user: User): Promise<any> {
+    return {
+      _id: user.id.toValue(),
+      username: user.username.value,
+      email: user.email.value,
+      scope: user.scope.value,
+      credentials: {
+        password: user.credential.value,
+      },
+      isEmailVerified: user.isEmailVerified,
+      isAdminUser: user.isAdminUser,
+      isDeleted: user.isDeleted,
+    }
+  }
+}
