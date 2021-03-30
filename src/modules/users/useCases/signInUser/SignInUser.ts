@@ -22,7 +22,7 @@ import { UserCredential } from '../../domain/userCredential'
 import { UserScope } from '../../domain/userScope'
 
 import { UserDomainEvent } from '../../domain/events/UserDomainEvent'
-import { IAuthorizationService } from '../../service/authorization/AuthorizationService'
+import { IResourceOwner } from '../../service/OAuth/ResourceOwner'
 
 /**
  * SignInUser
@@ -30,16 +30,16 @@ import { IAuthorizationService } from '../../service/authorization/Authorization
  */
 export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResponse>> {
   private userRepo: IUserRepo
-  private authorizationService: any
+  private oAuthService: IResourceOwner
 
   /**
    * Creates a new SignInUser instance
    * @param userRepo The user repository
-   * @param authorizationService
+   * @param oAuthService
    */
-  constructor(userRepo: IUserRepo, authorizationService: IAuthorizationService) {
+  constructor(userRepo: IUserRepo, oAuthService: IResourceOwner) {
     this.userRepo = userRepo
-    this.authorizationService = authorizationService
+    this.oAuthService = oAuthService
   }
 
   /**
@@ -51,7 +51,6 @@ export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResp
     const userName = UserName.create(signInUserDTO.username)
     const userCredential = await UserCredential.create(signInUserDTO.password)
     const userScope = UserScope.create(signInUserDTO.scope)
-
     const combinedResult = Result.combine([userName, userCredential, userScope])
 
     return {
@@ -62,7 +61,6 @@ export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResp
       userScope: userScope.isSuccess ? userScope.getValue() : userScope.errorValue(),
     }
   }
-
 
   /**
    * Execute the use case
@@ -79,25 +77,29 @@ export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResp
       }
 
       // Check if user exist and perform validation
-      // TODO: Should be included in authServices
       const foundUser = <User>await this.userRepo.exists(signInUserDTO.username)
       if (!foundUser) {
+        // Did not find username
         return left(new SignInUserErrors.InvalidCredential()) as SignInUserResponse
-      } else {
-        if (!(await foundUser.credential.compare(signInUserDTO.password))) {
-          return left(new SignInUserErrors.InvalidCredential()) as SignInUserResponse
-        }
-
-        if (foundUser.isDeleted) {
-          return left(new SignInUserErrors.UserIsMarkedForDeletion()) as SignInUserResponse
-        }
       }
 
-      let token = await this.authorizationService.getAuthorizationToken(
+      // Invalid password
+      if (!(await foundUser.credential.compare(signInUserDTO.password))) {
+        return left(new SignInUserErrors.InvalidCredential()) as SignInUserResponse
+      }
+
+      // User account disabled
+      if (foundUser.isDeleted) {
+        return left(new SignInUserErrors.UserIsMarkedForDeletion()) as SignInUserResponse
+      }
+
+      // username and password matched
+      let token = await this.oAuthService.getAccessToken(
         signInUserDTO.username,
         signInUserDTO.password,
         signInUserDTO.scope
       )
+
 
       if (!token) {
         return left(new SignInUserErrors.NotAuthorized()) as SignInUserResponse
