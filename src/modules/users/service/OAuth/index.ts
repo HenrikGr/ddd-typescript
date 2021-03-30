@@ -6,10 +6,12 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { MongoUserRepo } from './implementations/MongoUserRepo'
-import { userDao } from '../infra/database'
+import { ResourceOwner } from './ResourceOwner'
+import { sessionDao } from '../../infra/database'
+import { oAuthClient } from './Client'
 
-const logger = createClientLogger('UserDao:UserRepo')
-const userRepo = new MongoUserRepo(userDao, logger)
+const logger = createClientLogger('ResourceOwner')
 
-export { userRepo }
+const oAuthService = new ResourceOwner(sessionDao, oAuthClient, logger)
+
+export { oAuthService }

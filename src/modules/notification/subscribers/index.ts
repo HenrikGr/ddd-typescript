@@ -6,7 +6,7 @@
  */
 
 import { BaseDao } from '@hgc-sdk/mongo-db'
-import { dbClient } from '../../../infra/database'
+import { dbClient } from '../../../infra/database/mongo/DbClient'
 import { UserDomainEvents } from "./events/UserDomainEvents";
 import { EventModel } from '../infra/database/models/EventModel'
 import { MongoEventLogger } from '../infra/database/implementation/MongoEventLogger'

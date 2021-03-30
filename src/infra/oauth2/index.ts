@@ -1,5 +1,5 @@
 
-import { ClientConfigurationReader} from '../../modules/users/service/authorization/ClientConfigurationReader'
+import { ClientConfigurationReader} from '../../modules/users/service/OAuth/ClientConfigurationReader'
 
 const { ClientCredentials, ResourceOwnerPassword, AuthorizationCode } = require('simple-oauth2');
 

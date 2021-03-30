@@ -8,8 +8,8 @@
 import { SignInUser } from './SignInUser'
 import { SignInUserController } from './SignInUserController'
 import { userRepo } from '../../repos'
-import { authorizationService } from '../../service/authorization'
+import { oAuthService } from '../../service/OAuth'
 
-const signInUserController = new SignInUserController(new SignInUser(userRepo, authorizationService))
+const signInUserController = new SignInUserController(new SignInUser(userRepo, oAuthService))
 
 export { signInUserController }

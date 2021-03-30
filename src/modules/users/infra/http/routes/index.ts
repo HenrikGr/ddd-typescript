@@ -8,10 +8,8 @@
 import express from 'express'
 import { signUpUserController } from '../../../useCases/signUpUser'
 import { deleteUserController } from '../../../useCases/deleteUser'
-import { signInUserController} from '../../../useCases/signInUser'
+import { signInUserController } from '../../../useCases/signInUser'
 
-//import { getUserByUserNameController } from '../../../useCases/getUserByUserName';
-//import { loginController } from '../../../useCases/login';
 //import { middleware } from '../../../../../shared/infra/http';
 //import { getCurrentUserController } from '../../../useCases/getCurrentUser';
 //import { refreshAccessTokenController } from '../../../useCases/refreshAccessToken';
@@ -22,9 +20,6 @@ const userRouter = express.Router()
 userRouter.post('/', (req, res) => signUpUserController.executeImpl(req, res))
 userRouter.post('/login', (req, res) => signInUserController.execute(req, res))
 userRouter.delete('/:username', (req, res) => deleteUserController.executeImpl(req, res))
-
-
-
 
 /*
 userRouter.get('/me',
