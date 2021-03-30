@@ -5,58 +5,59 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { ServiceLogger } from '@hgc-sdk/logger'
+import { IUserDao } from '../../infra/database/dao/UserDao'
+
 import { IUserRepo } from '../userRepo'
 import { UserMap } from '../../mappers/userMap'
 import { User } from '../../domain/User'
 
-/**
- * Implements user repository for MongoDb
- * @class
- */
 export class MongoUserRepo implements IUserRepo {
-  private userModel: any
+  private dao: IUserDao
+  private logger: ServiceLogger
 
-  /**
-   * Creates a new MongoUserRepo instance
-   * @param userModel
-   */
-  public constructor(userModel: any) {
-    this.userModel = userModel
+  public constructor(dao: IUserDao, logger: ServiceLogger) {
+    this.dao = dao
+    this.logger = logger
   }
 
-  /**
-   * Check if user already exist in the database
-   * @param username
-   * @param email
-   */
   public async exists(username: string, email?: string): Promise<User | boolean> {
-    const foundUser = await this.userModel.exist(username, email)
+    this.logger.info('exist: ', username, email)
+
+    const foundUser = await this.dao.exist(username, email)
     if (foundUser) {
+      this.logger.verbose('exist: found user ', JSON.stringify(foundUser))
       return UserMap.toDomain(foundUser)
     }
+
+    this.logger.verbose('exist: no user found')
     return false
   }
 
-  /**
-   * Save user to the database
-   * @param user
-   */
   public async save(user: User): Promise<boolean> {
-    // Create a new user
-    const rawUser = await UserMap.toPersistence(user)
-    const isUserCreated = await this.userModel.createUser(rawUser)
+    this.logger.info('save: ', JSON.stringify(user))
 
-    // Return save result
+    const createUserDTO = UserMap.toCreateUserDTO(user)
+    const isUserCreated = await this.dao.createUser(createUserDTO)
+
+    this.logger.verbose('save: user created? ', isUserCreated)
     return isUserCreated
   }
 
-  /**
-   * Delete user
-   * @param user
-   */
+  public async markUserForDeletion(user: User) {
+    this.logger.info('markUserForDeletion: ', user.username.value)
+
+    const updateUserDTO = UserMap.toUpdateUserDTO(user)
+    const isUpdated = await this.dao.updateUserByUserName(user.username.value, updateUserDTO)
+
+    this.logger.verbose('markUserForDeletion: user updated? ', isUpdated)
+    return isUpdated
+  }
+
   public async delete(user: User): Promise<boolean> {
-    //const rawUser = await UserMap.toPersistence(user)
-    //console.log('delete user: ', rawUser)
-    return await this.userModel.deleteUser(user.username.value)
+    this.logger.info('delete: ', user.username.value)
+    const isDeleted  = await this.dao.deleteUserByUserName(user.username.value)
+    this.logger.verbose('delete: user deleted? ', isDeleted)
+    return isDeleted
   }
 }
