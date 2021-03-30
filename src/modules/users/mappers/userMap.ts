@@ -12,6 +12,8 @@ import { UserName } from '../domain/userName'
 import { UserEmail } from '../domain/userEmail'
 import { UserScope } from '../domain/userScope'
 import { UserCredential } from '../domain/userCredential'
+import { CreateUserDTO } from '../dtos/CreateUserDTO'
+import { UpdateUserDTO } from '../dtos/UpdateUserDTO'
 
 /**
  * Implements data mapper logic for the User
@@ -49,8 +51,7 @@ export class UserMap implements Mapper<User> {
    */
   public static async toDomain(raw: any): Promise<User> {
     const rawUser = raw
-
-    const resultUser = User.create(
+    return User.create(
       {
         username: this.toUserName(raw),
         email: this.toUserEmail(raw),
@@ -62,28 +63,36 @@ export class UserMap implements Mapper<User> {
       },
       new UniqueEntityID(rawUser._id)
     )
-
-    return resultUser.getValue()
   }
 
   /**
    * Map user domain entity to persistent format.
-   *
    * When saving a new user, the username and the salted and hashed password
    * should be saved in a separate model - credentials collection, while the
    * common user properties is stored in the user collection.
    * @param {User} user
    * @return {Promise<any>}
    */
-  public static async toPersistence(user: User): Promise<any> {
+  public static toCreateUserDTO(user: User): CreateUserDTO {
     return {
-      _id: user.id.toValue(),
+      _id: user.id.toString(),
       username: user.username.value,
       email: user.email.value,
-      scope: user.scope.value,
       credentials: {
         password: user.credential.value,
       },
+      scope: user.scope.value,
+      isEmailVerified: user.isEmailVerified,
+      isAdminUser: user.isAdminUser,
+      isDeleted: user.isDeleted,
+    }
+  }
+
+  public static toUpdateUserDTO(user: User): UpdateUserDTO {
+    return {
+      username: user.username.value,
+      email: user.email.value,
+      scope: user.scope.value,
       isEmailVerified: user.isEmailVerified,
       isAdminUser: user.isAdminUser,
       isDeleted: user.isDeleted,

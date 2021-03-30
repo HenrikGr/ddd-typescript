@@ -22,11 +22,11 @@ import { UserId } from './UserId'
 export interface IUserProps {
   username: UserName
   email: UserEmail
-  credential?: UserCredential
-  scope?: UserScope
-  isEmailVerified?: boolean
-  isAdminUser?: boolean
-  isDeleted?: boolean
+  credential: UserCredential
+  scope: UserScope
+  isEmailVerified: boolean
+  isAdminUser: boolean
+  isDeleted: boolean
 }
 
 /**
@@ -79,20 +79,20 @@ export class User extends AggregateRoot<IUserProps> {
    * Getter for credential
    */
   get credential(): UserCredential {
-    return <UserCredential>this.props.credential
+    return this.props.credential
   }
 
   /**
    * Getter for user scope
    */
   get scope(): UserScope {
-    return <UserScope>this.props.scope
+    return this.props.scope
   }
 
   /**
    * Getter for email verified flag
    */
-  get isEmailVerified(): boolean | undefined {
+  get isEmailVerified(): boolean {
     return this.props.isEmailVerified
   }
 
@@ -105,14 +105,14 @@ export class User extends AggregateRoot<IUserProps> {
   /**
    * Getter for is admin user flag
    */
-  get isAdminUser(): boolean | undefined {
+  get isAdminUser(): boolean {
     return this.props.isAdminUser
   }
 
   /**
    * Getter for is deleted flag
    */
-  get isDeleted(): boolean | undefined {
+  get isDeleted(): boolean {
     return this.props.isDeleted
   }
 
@@ -122,17 +122,9 @@ export class User extends AggregateRoot<IUserProps> {
    * @param {UniqueEntityID} id
    * @return {Result<User>}
    */
-  public static create(props: IUserProps, id?: UniqueEntityID): Result<User> {
-    const user = new User(
-      {
-        ...props,
-        scope: props.scope ? props.scope : UserScope.create('profile').getValue(),
-        isDeleted: props.isDeleted ? props.isDeleted : false,
-        isEmailVerified: props.isEmailVerified ? props.isEmailVerified : false,
-        isAdminUser: props.isAdminUser ? props.isAdminUser : false,
-      },
-      id
-    )
+  public static create(props: IUserProps, id?: UniqueEntityID): User {
+
+    const user = new User({ ...props }, id)
 
     /**
      * if a new user entity was created
@@ -143,6 +135,6 @@ export class User extends AggregateRoot<IUserProps> {
       //user.addDomainEvent(userCreated)
     }
 
-    return Result.ok<User>(user)
+    return user
   }
 }

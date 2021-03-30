@@ -53,6 +53,6 @@ export class UserScope extends ValueObject<IUserScopeProps> {
       return Result.fail<UserScope>(usernameResult.message)
     }
 
-    return Result.ok<UserScope>(new UserScope({ scope: scope}))
+    return Result.ok<UserScope>(new UserScope({ scope: scope }))
   }
 }
