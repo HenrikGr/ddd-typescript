@@ -22,6 +22,7 @@ import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
 import { UserEmail } from '../../domain/userEmail'
 import { UserCredential } from '../../domain/userCredential'
+import { UserScope } from '../../domain/userScope'
 
 /**
  * Implements sign up use case
@@ -85,7 +86,7 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         return left(new SignUpUserErrors.ValidationError(validDTO.error)) as SignUpUserResponse
       }
 
-      // Check if user already exist in database and validate conflicts
+      // The exist method checks if username or email address is valid
       let foundUser: User = <User>(
         await this.userRepo.exists(validDTO.userName.value, validDTO.userEmail.value)
       )
@@ -103,24 +104,24 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         }
       }
 
-      // Create a new user entity
-      const resultUser = User.create({
+      // User was not found - try to create the new user entity
+      const user = User.create({
         username: validDTO.userName,
         email: validDTO.userEmail,
         credential: validDTO.userCredential,
+        scope: UserScope.create('profile').getValue(),
+        isDeleted: false,
+        isEmailVerified: false,
+        isAdminUser: false,
       })
-      if (!resultUser.isSuccess) {
-        return left(Result.fail<User>(resultUser.error.toString())) as SignUpUserResponse
-      }
 
-      const user: User = resultUser.getValue()
       // Save user
       const isSaved = await this.userRepo.save(user)
-      if (isSaved) {
-        this.dispatchDomainEvent(user)
-      } else {
+      if (!isSaved) {
         return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as SignUpUserResponse
       }
+
+      this.dispatchDomainEvent(user)
 
       return right(Result.ok<void>())
     } catch (err) {
