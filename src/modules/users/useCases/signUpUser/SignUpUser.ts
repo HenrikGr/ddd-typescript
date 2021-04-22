@@ -59,7 +59,7 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
    * @param signUpUserDTO
    * @private
    */
-  private async validateDTO(signUpUserDTO: SignUpUserDTO) {
+  private validateDTO = async (signUpUserDTO: SignUpUserDTO) => {
     const userName = UserName.create(signUpUserDTO.username)
     const userEmail = UserEmail.create(signUpUserDTO.email)
     const userCredential = await UserCredential.create(signUpUserDTO.password)
@@ -119,9 +119,9 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
       const isSaved = await this.userRepo.save(user)
       if (!isSaved) {
         return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as SignUpUserResponse
+      } else {
+        this.dispatchDomainEvent(user)
       }
-
-      this.dispatchDomainEvent(user)
 
       return right(Result.ok<void>())
     } catch (err) {

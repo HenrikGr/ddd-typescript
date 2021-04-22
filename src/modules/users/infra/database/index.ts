@@ -6,8 +6,8 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { UserDao } from './dao/UserDao'
-import { SessionDao } from './dao/SessionDao'
+import { UserDao } from './UserDao'
+import { SessionDao } from './SessionDao'
 import { baseDao } from '../../../../infra/database/mongo/BaseDao'
 
 const logger = createClientLogger('UserDao')

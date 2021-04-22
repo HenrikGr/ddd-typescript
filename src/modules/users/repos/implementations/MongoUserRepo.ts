@@ -6,7 +6,7 @@
  */
 
 import { ServiceLogger } from '@hgc-sdk/logger'
-import { IUserDao } from '../../infra/database/dao/UserDao'
+import { IUserDao } from '../../infra/database/UserDao'
 
 import { IUserRepo } from '../userRepo'
 import { UserMap } from '../../mappers/userMap'

@@ -8,13 +8,16 @@
 import { ServiceLogger } from '@hgc-sdk/logger'
 import { IBaseDao } from '@hgc-sdk/mongo-db'
 
+/**
+ * Session Service interface
+ */
 export interface ISessionDao {
   updateSession(username: string, serializedToken: string): Promise<boolean>
   getSession(username: string): Promise<any>
 }
 
 /**
- * Implements the AccessTokenModel API
+ * Implements the SessionDao API
  * @class
  */
 export class SessionDao {
@@ -23,7 +26,7 @@ export class SessionDao {
   private readonly collectionName: string
 
   /**
-   * Creates a new AccessTokenModel instance
+   * Creates a new SessionDao instance
    * @param dao
    * @param logger
    * @param collectionName
@@ -34,16 +37,26 @@ export class SessionDao {
     this.collectionName = collectionName ? collectionName : 'sessions'
   }
 
+  /**
+   * Serialize OAuth token
+   * @param token
+   * @protected
+   */
   protected serialize(token: string) {
     return JSON.stringify(token)
   }
 
+  /**
+   * Deserialize OAuth token
+   * @param serializedToken
+   * @protected
+   */
   protected deserialize(serializedToken: string) {
     return JSON.parse(serializedToken)
   }
 
   /**
-   * Update token by username
+   * Update session by username
    * @param username
    * @param token
    */
@@ -67,7 +80,7 @@ export class SessionDao {
   }
 
   /**
-   * Find access token by username
+   * Find session token by username
    * @param username
    */
   public async getSession(username: string): Promise<string> {

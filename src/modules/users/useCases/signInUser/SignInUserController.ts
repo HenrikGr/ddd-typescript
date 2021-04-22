@@ -10,7 +10,7 @@ import { AppError } from '../../../../core/common/AppError'
 import { BaseController, Request, Response } from '../../../../core/infra/BaseController'
 
 import { SignInUser } from './SignInUser'
-import { SignInUserDTO, ISignInUserResponseDTO } from './SignInUserDTO'
+import { SignInDTO, SignInResponseDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
 
 /**
@@ -33,11 +33,12 @@ export class SignInUserController extends BaseController {
    * @param req
    * @param res
    */
-  public async executeImpl(req: Request, res: Response): Promise<void | any> {
-    let signInUserDTO = req.body as SignInUserDTO
+  public async executeImpl(req: any, res: Response): Promise<void | any> {
+    let signInDTO = req.body as SignInDTO
+    console.log('session: ', req.session, req.user)
 
     try {
-      const result = await this.useCase.execute(signInUserDTO)
+      const result = await this.useCase.execute(signInDTO)
       if (result.isLeft()) {
         const errorResult = result.value
         switch (errorResult.constructor) {
@@ -55,8 +56,11 @@ export class SignInUserController extends BaseController {
             return this.fail(res, errorResult.errorValue().message)
         }
       } else {
-        const token = result.value.getValue() as ISignInUserResponseDTO
-        return this.ok<ISignInUserResponseDTO>(res, token)
+
+        const token = result.value.getValue() as SignInResponseDTO
+        console.log('token', token)
+
+        return this.ok<SignInResponseDTO>(res, token)
       }
     } catch (err) {
       return this.fail(res, err)

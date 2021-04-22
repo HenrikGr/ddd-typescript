@@ -8,7 +8,7 @@
 /**
  * SignInUser DTO interface
  */
-export interface SignInUserDTO {
+export interface SignInDTO {
   username: string
   password: string
   scope: string
@@ -16,15 +16,11 @@ export interface SignInUserDTO {
 
 type Bearer = string
 
-export interface IAccessToken {
+export interface SignInResponseDTO {
   access_token: string,
   token_type: Bearer,
   expires_in: number,
   refresh_token: string,
   scope: string,
   expires_at: Date
-}
-
-export interface ISignInUserResponseDTO {
-  token: IAccessToken
 }

@@ -3,6 +3,7 @@ lerna-debug.log
 npm-debug.log
 /node_modules
 /docs
+/security
 .idea
 *.pem
 

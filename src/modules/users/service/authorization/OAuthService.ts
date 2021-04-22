@@ -6,31 +6,30 @@
  */
 
 import { ServiceLogger } from '@hgc-sdk/logger'
-import { ISessionDao } from '../../infra/database/dao/SessionDao'
 
-export interface IResourceOwner {
-  getAccessToken(username: string, password: string, scope?: string): Promise<any>
+/**
+ * OAuth service interface
+ */
+export interface IOAuthService {
+  token(username: string, password: string, scope?: string): Promise<any>
   hasExpired(username: string, token: object): Promise<any>
   revokeTokens(username: string): Promise<any>
 }
 
 /**
- * Resource owner authorization service
+ * OAuthService used to call OAuth2 server to authorize users
  */
-export class ResourceOwner {
+export class OAuthService {
   private readonly EXPIRATION_WINDOW_IN_SECONDS = 300
   private oAuthClient: any
-  private sessionDao: ISessionDao
   private logger: ServiceLogger
 
   /**
-   * Creates a new AuthorizationService instance
-   * @param sessionDao
+   * Creates a new OAuthService instance
    * @param oAuthClient
    * @param logger
    */
-  constructor(sessionDao: ISessionDao, oAuthClient: any, logger: ServiceLogger) {
-    this.sessionDao = sessionDao
+  constructor(oAuthClient: any, logger: ServiceLogger) {
     this.oAuthClient = oAuthClient
     this.logger = logger
   }
@@ -41,7 +40,7 @@ export class ResourceOwner {
    * @param password
    * @param scope
    */
-  public async getAccessToken(username: string, password: string, scope?: string) {
+  public async token(username: string, password: string, scope?: string) {
     this.logger.verbose('getAccessToken: ', username)
     const props = scope ? { username, password, scope } : { username, password }
     const accessToken = await this.oAuthClient.getToken(props)
@@ -49,16 +48,11 @@ export class ResourceOwner {
       return false
     }
 
-    const isSaved = await this.sessionDao.updateSession(username, accessToken)
-    if (!isSaved) {
-      return false
-    }
-
     return accessToken.token
   }
 
   /**
-   * Check if an plain access token has expired and if so - refresh it
+   * Check if access token has expired and if so - refresh it
    * @param username
    * @param token
    */
@@ -71,11 +65,6 @@ export class ResourceOwner {
       if(!accessToken) {
         return false
       }
-      const isSaved = await this.sessionDao.updateSession(username, accessToken)
-      if (!isSaved) {
-        return false
-      }
-
       return accessToken.token
     }
 
@@ -86,10 +75,8 @@ export class ResourceOwner {
    * Revoke all tokens for a user
    * @param username
    */
-  public async revokeTokens(username: string) {
-    this.logger.verbose('revokeTokens: ', username)
-    const sessionAccessToken = await this.sessionDao.getSession(username)
-    const accessToken = this.oAuthClient.createToken(sessionAccessToken)
+  public async revokeTokens(token: string) {
+    const accessToken = this.oAuthClient.createToken(token)
     await accessToken.revokeAll()
   }
 

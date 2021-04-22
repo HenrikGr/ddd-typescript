@@ -12,7 +12,7 @@ import { DomainEvents } from '../../../../core/domain/events/DomainEvents'
 import { UseCase } from '../../../../core/domain/UseCase'
 
 import { IUserRepo } from '../../repos/userRepo'
-import { SignInUserDTO, ISignInUserResponseDTO } from './SignInUserDTO'
+import { SignInDTO, SignInResponseDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
 import { SignInUserResponse } from './SignInUserResponses'
 
@@ -28,7 +28,7 @@ import { IResourceOwner } from '../../service/OAuth/ResourceOwner'
  * SignInUser
  * @class
  */
-export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResponse>> {
+export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse>> {
   private userRepo: IUserRepo
   private oAuthService: IResourceOwner
 
@@ -44,13 +44,13 @@ export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResp
 
   /**
    * Validate DTO
-   * @param signInUserDTO
+   * @param signInDTO
    * @private
    */
-  private async validateDTO(signInUserDTO: SignInUserDTO) {
-    const userName = UserName.create(signInUserDTO.username)
-    const userCredential = await UserCredential.create(signInUserDTO.password)
-    const userScope = UserScope.create(signInUserDTO.scope)
+  private validateDTO = async (signInDTO: SignInDTO) => {
+    const userName = UserName.create(signInDTO.username)
+    const userCredential = await UserCredential.create(signInDTO.password)
+    const userScope = UserScope.create(signInDTO.scope)
     const combinedResult = Result.combine([userName, userCredential, userScope])
 
     return {
@@ -64,48 +64,47 @@ export class SignInUser implements UseCase<SignInUserDTO, Promise<SignInUserResp
 
   /**
    * Execute the use case
-   * @param signInUserDTO
+   * @param signInDTO
    */
-  public async execute(signInUserDTO: SignInUserDTO): Promise<SignInUserResponse> {
+  public async execute(signInDTO: SignInDTO): Promise<SignInUserResponse> {
 
     try {
 
       // Validate DTO
-      const validDTO = await this.validateDTO(signInUserDTO)
+      const validDTO = await this.validateDTO(signInDTO)
       if (!validDTO.isSuccess) {
         return left(new SignInUserErrors.ValidationError(validDTO.error)) as SignInUserResponse
       }
 
       // Check if user exist and perform validation
-      const foundUser = <User>await this.userRepo.exists(signInUserDTO.username)
+      const foundUser = <User>await this.userRepo.exists(signInDTO.username)
       if (!foundUser) {
         // Did not find username
         return left(new SignInUserErrors.InvalidCredential()) as SignInUserResponse
       }
 
-      // Invalid password
-      if (!(await foundUser.credential.compare(signInUserDTO.password))) {
+      // Check password on found user
+      if (!(await foundUser.credential.compare(signInDTO.password))) {
         return left(new SignInUserErrors.InvalidCredential()) as SignInUserResponse
       }
 
-      // User account disabled
+      // Check if account disabled
       if (foundUser.isDeleted) {
         return left(new SignInUserErrors.UserIsMarkedForDeletion()) as SignInUserResponse
       }
 
-      // username and password matched
+      // Authorize the user against the OAuth2 server
       let token = await this.oAuthService.getAccessToken(
-        signInUserDTO.username,
-        signInUserDTO.password,
-        signInUserDTO.scope
+        signInDTO.username,
+        signInDTO.password,
+        signInDTO.scope
       )
-
 
       if (!token) {
         return left(new SignInUserErrors.NotAuthorized()) as SignInUserResponse
       }
 
-      return right(Result.ok<ISignInUserResponseDTO>(token))
+      return right(Result.ok<SignInResponseDTO>(token))
     } catch (err) {
       return left(new AppError.UnexpectedError(err)) as SignInUserResponse
     }

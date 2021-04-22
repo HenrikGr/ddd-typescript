@@ -9,7 +9,7 @@ import express from 'express'
 import { signUpUserController } from '../../../useCases/signUpUser'
 import { deleteUserController } from '../../../useCases/deleteUser'
 import { signInUserController } from '../../../useCases/signInUser'
-
+import { authenticate } from '../../../service/strategy/local-strategy'
 //import { middleware } from '../../../../../shared/infra/http';
 //import { getCurrentUserController } from '../../../useCases/getCurrentUser';
 //import { refreshAccessTokenController } from '../../../useCases/refreshAccessToken';
@@ -18,7 +18,7 @@ import { signInUserController } from '../../../useCases/signInUser'
 const userRouter = express.Router()
 
 userRouter.post('/', (req, res) => signUpUserController.executeImpl(req, res))
-userRouter.post('/login', (req, res) => signInUserController.execute(req, res))
+userRouter.post('/login', authenticate, (req, res) => signInUserController.executeImpl(req, res))
 userRouter.delete('/:username', (req, res) => deleteUserController.executeImpl(req, res))
 
 /*

@@ -4,7 +4,7 @@ The core module contains;
 
 - a common module for generic application services,
 - a domain module for common domain classes,
-- a infra module for common ports to the application.
+- an infra module for common ports to the application.
 
 ## Common module
 

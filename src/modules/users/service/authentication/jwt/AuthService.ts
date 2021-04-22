@@ -6,6 +6,7 @@
  */
 
 import { JWT } from './jwt/JWT'
+import { IUserDao } from '../../infra/database/UserDao'
 
 export interface IDTokenClaims {
   sub: string
@@ -32,9 +33,11 @@ export interface IAuthService {
 
 export class AuthService {
   private jwt: JWT
+  private userDao: IUserDao
 
-  constructor(jwt: JWT) {
+  constructor(jwt: JWT, userDao: IUserDao) {
     this.jwt = jwt
+    this.userDao = userDao
   }
 
   createToken(claims: IDTokenClaims): IDToken {
@@ -52,4 +55,11 @@ export class AuthService {
       scope: decodedToken.scope,
     }
   }
+
+
+  createIDToken(props: any) {
+
+  }
+
+
 }
