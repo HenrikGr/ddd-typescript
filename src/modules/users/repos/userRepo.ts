@@ -13,5 +13,6 @@ import { User } from '../domain/User'
 export interface IUserRepo {
   exists(username: string, email?: string): Promise<User | boolean>
   save(user: User): Promise<boolean>
+  markUserForDeletion(user: User): Promise<boolean>
   delete(user: User): Promise<boolean>
 }

@@ -4,7 +4,7 @@
  * @licence This source code is licensed under the MIT license described
  * and found in the LICENSE file in the root directory of this source tree.
  */
-
+import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { Result, left, right } from '../../../../core/common/Result'
 
@@ -22,7 +22,8 @@ import { UserCredential } from '../../domain/userCredential'
 import { UserScope } from '../../domain/userScope'
 
 import { UserDomainEvent } from '../../domain/events/UserDomainEvent'
-import { IResourceOwner } from '../../service/OAuth/ResourceOwner'
+import { IOAuthService } from '../../service/authorization/OAuthService'
+
 
 /**
  * SignInUser
@@ -30,16 +31,19 @@ import { IResourceOwner } from '../../service/OAuth/ResourceOwner'
  */
 export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse>> {
   private userRepo: IUserRepo
-  private oAuthService: IResourceOwner
+  private oAuthService: IOAuthService
+  private logger: ServiceLogger
 
   /**
    * Creates a new SignInUser instance
    * @param userRepo The user repository
-   * @param oAuthService
+   * @param oAuthService OAuth service
+   * @param logger
    */
-  constructor(userRepo: IUserRepo, oAuthService: IResourceOwner) {
+  constructor(userRepo: IUserRepo, oAuthService: IOAuthService, logger: ServiceLogger) {
     this.userRepo = userRepo
     this.oAuthService = oAuthService
+    this.logger = logger
   }
 
   /**
@@ -48,6 +52,7 @@ export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse
    * @private
    */
   private validateDTO = async (signInDTO: SignInDTO) => {
+    this.logger.verbose('validateDTO: ', signInDTO)
     const userName = UserName.create(signInDTO.username)
     const userCredential = await UserCredential.create(signInDTO.password)
     const userScope = UserScope.create(signInDTO.scope)
@@ -67,7 +72,7 @@ export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse
    * @param signInDTO
    */
   public async execute(signInDTO: SignInDTO): Promise<SignInUserResponse> {
-
+    this.logger.verbose('Execute SingInUser use case')
     try {
 
       // Validate DTO
@@ -94,7 +99,7 @@ export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse
       }
 
       // Authorize the user against the OAuth2 server
-      let token = await this.oAuthService.getAccessToken(
+      let token = await this.oAuthService.token(
         signInDTO.username,
         signInDTO.password,
         signInDTO.scope
@@ -104,7 +109,12 @@ export class SignInUser implements UseCase<SignInDTO, Promise<SignInUserResponse
         return left(new SignInUserErrors.NotAuthorized()) as SignInUserResponse
       }
 
-      return right(Result.ok<SignInResponseDTO>(token))
+      const response = {
+        ...token,
+        user: foundUser
+      }
+
+      return right(Result.ok<SignInResponseDTO>(response))
     } catch (err) {
       return left(new AppError.UnexpectedError(err)) as SignInUserResponse
     }

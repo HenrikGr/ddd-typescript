@@ -7,20 +7,13 @@
 
 import { ServiceLogger } from '@hgc-sdk/logger'
 import { IBaseDao } from '@hgc-sdk/mongo-db'
-
-/**
- * Session Service interface
- */
-export interface ISessionDao {
-  updateSession(username: string, serializedToken: string): Promise<boolean>
-  getSession(username: string): Promise<any>
-}
+import { ISessionDao } from '../sessionDao'
 
 /**
  * Implements the SessionDao API
  * @class
  */
-export class SessionDao {
+export class MongoSessionDao implements ISessionDao {
   private dao: IBaseDao
   private logger: ServiceLogger
   private readonly collectionName: string

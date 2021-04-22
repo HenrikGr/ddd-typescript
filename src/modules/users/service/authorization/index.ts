@@ -7,9 +7,9 @@
 
 import { createClientLogger } from '@hgc-sdk/logger'
 import { OAuthService } from './OAuthService'
-import { oAuthClient } from './client/Client'
+import { resourceOwnerClient } from './client/ResourceOwnerClient'
 
 const logger = createClientLogger('OAuthService')
-const oAuthService = new OAuthService(oAuthClient, logger)
+const oAuthService = new OAuthService(resourceOwnerClient, logger)
 
 export { oAuthService }

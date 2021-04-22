@@ -8,7 +8,7 @@
 import { Either, Result } from '../../../../core/common/Result'
 import { AppError } from '../../../../core/common/AppError'
 import { SignInUserErrors } from './SignInUserErrors'
-import { ISignInUserResponseDTO } from './SignInUserDTO'
+import { SignInResponseDTO } from './SignInUserDTO'
 
 /**
  * Use case response types
@@ -19,6 +19,6 @@ export type SignInUserResponse = Either<
   | SignInUserErrors.UserIsMarkedForDeletion
   | SignInUserErrors.NotAuthorized
   | AppError.UnexpectedError,
-  Result<ISignInUserResponseDTO>
+  Result<SignInResponseDTO>
   >
 

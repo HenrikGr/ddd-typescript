@@ -6,9 +6,9 @@
  */
 
 import { ResourceOwnerPassword, ModuleOptions } from 'simple-oauth2'
-import { ClientConfigurationReader } from './ClientConfigurationReader'
+import { ClientConfigurationReader } from './config/ClientConfigurationReader'
 
 const config: ModuleOptions = ClientConfigurationReader.readEnvironment()
 
-export const oAuthClient = new ResourceOwnerPassword(config)
+export const resourceOwnerClient = new ResourceOwnerPassword(config)
 

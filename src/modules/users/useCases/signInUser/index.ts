@@ -5,11 +5,14 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { createClientLogger } from '@hgc-sdk/logger'
 import { SignInUser } from './SignInUser'
 import { SignInUserController } from './SignInUserController'
 import { userRepo } from '../../repos'
-import { oAuthService } from '../../service/OAuth'
+import { oAuthService } from '../../service/authorization'
 
-const signInUserController = new SignInUserController(new SignInUser(userRepo, oAuthService))
+const logger = createClientLogger('SingInUserController')
+const useCaseLogger = createClientLogger('SingInUseCase')
+const signInUserController = new SignInUserController(new SignInUser(userRepo, oAuthService, useCaseLogger), logger)
 
 export { signInUserController }

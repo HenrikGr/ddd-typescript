@@ -79,6 +79,7 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<DeleteUserResp
         return left(new DeleteUserErrors.ValidationError(validDTO.error)) as DeleteUserResponse
       }
 
+      /*
       // Check if user exist and validate conflicts
       const foundUser = <User>await this.userRepo.exists(validDTO.userName.value)
       if (!foundUser) {
@@ -92,6 +93,8 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<DeleteUserResp
       }
 
       this.dispatchDomainEvent(foundUser)
+
+       */
 
       return right(Result.ok<void>())
     } catch (err) {

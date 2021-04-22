@@ -1,6 +1,6 @@
 require('dotenv').config()
-import { JWTConfigurationReader } from './jwt/JWTConfigurationReader'
-import { JWT, JWTStandardClaims } from './jwt/JWT'
+import { JWTConfigurationReader } from './JWTConfigurationReader'
+import { JWT, JWTStandardClaims } from './JWT'
 import { IDTokenClaims } from './TokenClaims'
 
 describe('JWT', function () {

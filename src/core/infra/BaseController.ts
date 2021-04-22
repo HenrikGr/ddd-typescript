@@ -8,7 +8,6 @@
 import { Request, Response } from 'express'
 export { Request, Response } from 'express'
 
-
 /**
  * An abstract controller class providing interfaces to
  * handle the API request - response cycle.
@@ -29,10 +28,8 @@ export abstract class BaseController {
    */
   public async execute(req: Request, res: Response): Promise<void> {
     try {
-
       // Execute the subclass controller implementation
       await this.executeImpl(req, res)
-
     } catch (err) {
       console.log(`[BaseController]: Uncaught controller error`, err)
       this.fail(res, 'An unexpected error occurred')
@@ -69,14 +66,14 @@ export abstract class BaseController {
    * @param error The error object or string
    */
   public fail(res: Response, error: Error | string): Response {
-    if(error instanceof Error) {
+    if (error instanceof Error) {
       return res.status(500).json({
         message: error.toString(),
       })
     }
 
     return res.status(500).json({
-      message: error
+      message: error,
     })
   }
 

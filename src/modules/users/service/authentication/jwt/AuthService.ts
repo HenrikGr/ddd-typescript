@@ -5,8 +5,8 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { JWT } from './jwt/JWT'
-import { IUserDao } from '../../infra/database/UserDao'
+import { JWT } from './JWT'
+import { IUserDao } from '../../../infra/database/UserDao'
 
 export interface IDTokenClaims {
   sub: string

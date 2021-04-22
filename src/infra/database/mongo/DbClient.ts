@@ -11,5 +11,6 @@ const connectionOpts = DbClientConfiguration.create()
 const dbClient = DbClient.create(connectionOpts)
 
 export {
+  connectionOpts,
   dbClient
 }

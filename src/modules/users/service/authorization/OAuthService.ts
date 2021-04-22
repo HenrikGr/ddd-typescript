@@ -16,6 +16,7 @@ export interface IOAuthService {
   revokeTokens(username: string): Promise<any>
 }
 
+
 /**
  * OAuthService used to call OAuth2 server to authorize users
  */
