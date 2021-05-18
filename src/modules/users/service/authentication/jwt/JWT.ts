@@ -31,10 +31,10 @@ export class JWT {
 
   /**
    * Creates a new JWT instance
-   * @param configurationReader
+   * @param config
    */
-  constructor(configurationReader: IJWTConfigurationReader) {
-    const jwtConfig: JWTConfiguration = configurationReader.readEnvironment()
+  constructor(config: JWTConfiguration) {
+    const jwtConfig = config
     this.alg = 'RS256'
     this.privateKey = jwtConfig.privateKey
     this.publicKey = jwtConfig.publicKey

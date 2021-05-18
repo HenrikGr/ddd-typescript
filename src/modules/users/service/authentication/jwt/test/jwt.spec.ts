@@ -24,7 +24,7 @@ describe('JWT', function () {
 
   describe('JWT Instance', () => {
     test('Create a JWT instance -> should contain correct properties', () => {
-      const jwt = new JWT(JWTConfigurationReader)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
 
       expect(jwt).toBeInstanceOf(JWT)
       expect(jwt).toHaveProperty('privateKey')
@@ -41,7 +41,7 @@ describe('JWT', function () {
         scope: 'email',
       }
 
-      const jwt = new JWT(JWTConfigurationReader)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
       const token = jwt.generateToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
@@ -58,7 +58,7 @@ describe('JWT', function () {
         scope: 'profile',
       }
 
-      const jwt = new JWT(JWTConfigurationReader)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
       const token = jwt.generateToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
@@ -87,7 +87,7 @@ describe('JWT', function () {
         ...emailClaims
       }
 
-      const jwt = new JWT(JWTConfigurationReader)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
       const token = jwt.generateToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
