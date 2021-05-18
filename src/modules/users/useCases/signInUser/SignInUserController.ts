@@ -12,6 +12,7 @@ import { BaseController, Request, Response, NextFunction } from '../../../../cor
 import { SignInUser } from './SignInUser'
 import { SignInDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
+import { User } from '../../domain/User'
 
 /**
  * Implements controller logic for the request/response
@@ -25,6 +26,16 @@ export class SignInUserController extends BaseController {
     super()
     this.useCase = useCase
     this.logger = logger
+  }
+
+  private updateSession = (req: Request, user: User) => {
+    req.session.user = {
+      username: user.username.value,
+      email: user.email.value,
+      scope: user.scope.value,
+      isEmailVerified: user.isEmailVerified,
+      isAdminUser: user.isAdminUser
+    }
   }
 
   public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
@@ -59,16 +70,8 @@ export class SignInUserController extends BaseController {
         }
       } else {
 
-        const userValue = result.value.getValue()
-
         // Set user in express session
-        req.session.user = {
-          username: userValue.username.value,
-          email: userValue.email.value,
-          scope: userValue.scope.value,
-          isEmailVerified: userValue.isEmailVerified,
-          isAdminUser: userValue.isAdminUser
-        }
+        this.updateSession(req, result.value.getValue())
 
         this.logger.verbose('executeImpl: ended gracefully')
         return this.ok(res)
