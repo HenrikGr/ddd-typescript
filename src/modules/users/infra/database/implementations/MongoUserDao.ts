@@ -9,15 +9,28 @@ import { ServiceLogger } from '@hgc-sdk/logger'
 import { IBaseDao } from '@hgc-sdk/mongo-db'
 import { CreateUserDTO } from '../../../dtos/CreateUserDTO'
 import { UpdateUserDTO } from '../../../dtos/UpdateUserDTO'
-import { IUserDao } from '../userDao'
-
+import { IUserDao } from '../IUserDao'
 
 /**
- * User Data Access Object
+ * Implements data access object logic for users resources
  */
 export class MongoUserDao implements IUserDao {
+  /**
+   * Base dao
+   * @private
+   */
   private dao: IBaseDao
+
+  /**
+   * Module logger
+   * @private
+   */
   private logger: ServiceLogger
+
+  /**
+   * User collection name
+   * @private
+   */
   private readonly collectionName: string
 
   /**
@@ -51,6 +64,8 @@ export class MongoUserDao implements IUserDao {
 
     try {
       let filter = {}
+
+      // If email provided - combine the filter
       if (userEmail) {
         filter = { $or: [{ username: userName }, { email: userEmail }] }
       } else {
@@ -136,7 +151,7 @@ export class MongoUserDao implements IUserDao {
     try {
       const options = { upsert: true }
       const filter = { username: userName }
-      return this.dao.updateOne('accounts', filter, dto, options)
+      return this.dao.updateOne(this.collectionName, filter, dto, options)
     } catch (err) {
       this.logger.error('updateUserByUsername: ', err.name, err.message)
       throw new Error(err.message)
@@ -151,7 +166,7 @@ export class MongoUserDao implements IUserDao {
     this.logger.verbose('deleteUserByUserName: ', userName)
     try {
       const filter = { username: userName }
-      return this.dao.deleteOne('accounts', filter)
+      return this.dao.deleteOne(this.collectionName, filter)
     } catch (error) {
       throw new Error(error.message)
     }

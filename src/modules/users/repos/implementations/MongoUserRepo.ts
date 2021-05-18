@@ -6,7 +6,7 @@
  */
 
 import { ServiceLogger } from '@hgc-sdk/logger'
-import { IUserDao } from '../../infra/database/userDao'
+import { IUserDao } from '../../infra/database/IUserDao'
 import { IUserRepo } from '../userRepo'
 import { UserMap } from '../../mappers/userMap'
 import { User } from '../../domain/User'
@@ -24,12 +24,13 @@ export class MongoUserRepo implements IUserRepo {
   }
 
   public async exists(username: string, email?: string): Promise<User | boolean> {
+    this.logger.verbose('exist: ', username, email)
     const foundUser = await this.userDao.exist(username, email)
     if (foundUser) {
-      this.logger.verbose('exist: found user ', JSON.stringify(foundUser))
       return UserMap.toDomain(foundUser)
     }
 
+    this.logger.verbose('exist: user did not exist')
     return false
   }
 

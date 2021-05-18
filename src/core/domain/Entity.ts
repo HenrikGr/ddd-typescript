@@ -33,6 +33,7 @@ export abstract class Entity<T> {
    * should not be able to change after instantiated
    */
   protected readonly _id: UniqueEntityID
+
   /**
    * The props of the entity class are stored in this.props
    * to leave to the subclass to decide getters and setters
@@ -51,7 +52,7 @@ export abstract class Entity<T> {
 
   /**
    * Equal comparator based on referential equality
-   * @param object
+   * @param object Entity object to compare
    */
   public equals(object?: Entity<T>): boolean {
     if (object == null) {

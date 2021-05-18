@@ -5,56 +5,43 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
-import { Result, left, right } from '../../../../core/common/Result'
+import { Result, left, right, Either } from '../../../../core/common/Result'
 
-//import { DomainEvents } from '../../../../core/domain/events/DomainEvents'
 import { UseCase } from '../../../../core/domain/UseCase'
-import { IUserRepo } from '../../repos/userRepo'
 
+import { IUserRepo } from '../../repos/userRepo'
 import { DeleteUserDTO } from './DeleteUserDTO'
 import { DeleteUserErrors } from './DeleteUserErrors'
-import { DeleteUserResponse } from './DeleteUserResponses'
 
 import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
 
-import { UserDomainEvent } from '../../domain/events/UserDomainEvent'
+/**
+ * Use case response
+ */
+type UseCaseResponse = Either<
+  | DeleteUserErrors.ValidationError
+  | DeleteUserErrors.UserNotFound
+  | DeleteUserErrors.UserIsMarkedForDeletion
+  | AppError.UnexpectedError
+  | Result<any>,
+  Result<void>
+>
 
 /**
- * DeleteUser
- * @class
+ * Implementation of the DeleteUser use case
  */
-export class DeleteUser implements UseCase<DeleteUserDTO, Promise<DeleteUserResponse>> {
+export class DeleteUser implements UseCase<DeleteUserDTO, Promise<UseCaseResponse>> {
   private userRepo: IUserRepo
+  private logger: ServiceLogger
 
-  /**
-   * Creates a new DeleteUser instance
-   * @param userRepo
-   */
-  constructor(userRepo: IUserRepo) {
+  constructor(userRepo: IUserRepo, logger: ServiceLogger) {
     this.userRepo = userRepo
+    this.logger = logger
   }
 
-  /**
-   * Method to dispatch domain events
-   * @param user
-   * @protected
-   */
-  private dispatchDomainEvent(user: User) {
-    //const domainEvent = new UserDomainEvent(user.id, 'meta: User deleted successfully')
-    //console.log('user domain events before: ', foundUser.domainEvents)
-    //DomainEvents.dispatch(domainEvent)
-    //console.log('user domain events after: ', foundUser.domainEvents)
-    //const userDeletedEvent = new UserDeleted(foundUser.id, 'delete meta')
-    //DomainEvents.dispatch(userDeletedEvent)
-  }
-
-  /**
-   * Validate DTO
-   * @param deleteUserDTO
-   * @private
-   */
   private async validateDTO(deleteUserDTO: DeleteUserDTO) {
     const userName = UserName.create(deleteUserDTO.username)
     const combinedResult = Result.combine([userName])
@@ -70,13 +57,14 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<DeleteUserResp
    * Execute the use case
    * @param deleteUserDTO
    */
-  public async execute(deleteUserDTO: DeleteUserDTO): Promise<DeleteUserResponse> {
+  public async execute(deleteUserDTO: DeleteUserDTO): Promise<UseCaseResponse> {
+    this.logger.verbose('execute: ', deleteUserDTO)
 
     try {
       // Validate DTO
       const validDTO = await this.validateDTO(deleteUserDTO)
       if (!validDTO.isSuccess) {
-        return left(new DeleteUserErrors.ValidationError(validDTO.error)) as DeleteUserResponse
+        return left(new DeleteUserErrors.ValidationError(validDTO.error)) as UseCaseResponse
       }
 
       /*
@@ -96,9 +84,10 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<DeleteUserResp
 
        */
 
+      this.logger.verbose('execute: ended gracefully')
       return right(Result.ok<void>())
     } catch (err) {
-      return left(new AppError.UnexpectedError(err)) as DeleteUserResponse
+      return left(new AppError.UnexpectedError(err)) as UseCaseResponse
     }
   }
 }

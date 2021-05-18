@@ -8,7 +8,10 @@
 import { Express } from 'express'
 import compression from 'compression'
 
-
+/**
+ * Apply compression for express app
+ * @param app
+ */
 export function applyCompression(app: Express) {
   app.use(compression())
 }

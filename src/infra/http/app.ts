@@ -10,34 +10,48 @@ import express from 'express'
 import { v1Router } from './routes/v1'
 import { appConfig } from './config'
 import { loadExpressMiddleware } from './middleware'
-import { loadServerCerts } from './security'
+import { loadServerCerts } from './certificates'
+import { errorHandler } from './errorHandler'
 
 const { key, cert } = loadServerCerts()
 const { port, appName } = appConfig
 const HOST = `${appName}:${port}`
 
-const app = express()
+/**
+ * Start express server
+ */
+async function startServer() {
 
-loadExpressMiddleware(app)
+  // Create an express app
+  const app = express()
 
-app.get('/', (req, res) => {
-  return res.json({ status: 'OK' })
-})
+  // Load express middlewares
+  loadExpressMiddleware(app, appConfig)
 
-app.use('/api/v1', v1Router)
+  // Ping endpoint
+  app.get('/ping', (req, res) => {
+    return res.status(200).json({ status: 'OK' })
+  })
 
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if (!err) {
-    return next()
-  }
-  return res.status(500).json({ message: err.toString() })
-})
+  // API routes
+  app.use('/api/v1', v1Router)
 
-app.use('*', (req: express.Request, res: express.Response) => {
-  const error = new Error('Resource not found')
-  return res.status(404).json({ message: error.toString() })
-})
+  // Internal error
+  app.use(errorHandler.handleInternalServerError)
 
-https.createServer({ key, cert }, app).listen(appConfig.port, () => {
-  console.log(`Listening on: ${HOST}`)
-})
+  // Not found error
+  app.use('*', errorHandler.handleNotFound)
+
+  // Create https server
+  const server = https.createServer({ key, cert }, app).listen(appConfig.port, () => {
+    console.log(`Listening on: ${HOST}`)
+  })
+
+  // Gracefully shut down
+  process.on('unhandledRejection', errorHandler.handleExceptions)
+  process.on('uncaughtException', errorHandler.handleExceptions)
+  process.on('SIGINT', errorHandler.handleServerExit('SIGINT', server))
+  process.on('SIGTERM', errorHandler.handleServerExit('SIGTERM', server))
+}
+
+startServer().catch((error) => console.log('Could not start server: ', error.message))

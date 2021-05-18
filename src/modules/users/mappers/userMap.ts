@@ -14,6 +14,7 @@ import { UserScope } from '../domain/userScope'
 import { UserCredential } from '../domain/userCredential'
 import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { UpdateUserDTO } from '../dtos/UpdateUserDTO'
+import { UserId } from '../domain/UserId'
 
 /**
  * Implements data mapper logic for the User
@@ -25,6 +26,7 @@ import { UpdateUserDTO } from '../dtos/UpdateUserDTO'
  * @class
  */
 export class UserMap implements Mapper<User> {
+
   public static toUserName(raw: any): UserName {
     const resultUserName = UserName.create(raw.username)
     return resultUserName.getValue()
@@ -51,7 +53,7 @@ export class UserMap implements Mapper<User> {
    */
   public static async toDomain(raw: any): Promise<User> {
     const rawUser = raw
-    return User.create(
+    const resultUser = User.create(
       {
         username: this.toUserName(raw),
         email: this.toUserEmail(raw),
@@ -63,15 +65,13 @@ export class UserMap implements Mapper<User> {
       },
       new UniqueEntityID(rawUser._id)
     )
+
+    return resultUser.getValue()
   }
 
   /**
    * Map user domain entity to persistent format.
-   * When saving a new user, the username and the salted and hashed password
-   * should be saved in a separate model - credentials collection, while the
-   * common user properties is stored in the user collection.
-   * @param {User} user
-   * @return {Promise<any>}
+   * @param user
    */
   public static toCreateUserDTO(user: User): CreateUserDTO {
     return {
@@ -88,6 +88,10 @@ export class UserMap implements Mapper<User> {
     }
   }
 
+  /**
+   *
+   * @param user
+   */
   public static toUpdateUserDTO(user: User): UpdateUserDTO {
     return {
       username: user.username.value,

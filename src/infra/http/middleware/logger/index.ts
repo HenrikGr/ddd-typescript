@@ -8,7 +8,10 @@
 import { Express } from 'express'
 import morgan from 'morgan'
 
-
+/**
+ * Apply logger for express app
+ * @param app
+ */
 export function applyLogger(app: Express) {
   app.use(morgan('combined'))
 }

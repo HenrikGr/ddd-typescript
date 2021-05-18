@@ -35,7 +35,7 @@ export namespace SignInUserErrors {
   export class NotAuthorized extends Result<UseCaseError> {
     constructor(parameter?: string) {
       super(false, {
-        message: `Request was not authorized`,
+        message: parameter ? `${parameter}` : `Request was not authorized`,
       } as UseCaseError)
     }
   }

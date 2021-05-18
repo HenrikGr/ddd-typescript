@@ -5,33 +5,33 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { Request, Response } from 'express'
-export { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
+export { Request, Response,NextFunction } from 'express'
 
 /**
- * An abstract controller class providing interfaces to
- * handle the API request - response cycle.
- * @class
+ * An abstract controller class providing interfaces to handle the API request - response cycle.
  */
 export abstract class BaseController {
+
   /**
    * Abstract method implementation interface for sub classes
-   * @param req The request object
-   * @param res The response object
+   * @param req
+   * @param res
+   * @param next
+   * @protected
    */
-  protected abstract executeImpl(req: Request, res: Response): Promise<void | any>
+  protected abstract executeImpl(req: Request, res: Response, next?: NextFunction): Promise<void | any>
 
   /**
    * Route handler that catch any uncaught error in the sub class implementation.
-   * @param req The request object
-   * @param res The response object
+   * @param req
+   * @param res
+   * @param next
    */
-  public async execute(req: Request, res: Response): Promise<void> {
+  public async execute(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Execute the subclass controller implementation
-      await this.executeImpl(req, res)
+        await this.executeImpl(req, res, next)
     } catch (err) {
-      console.log(`[BaseController]: Uncaught controller error`, err)
       this.fail(res, 'An unexpected error occurred')
     }
   }
@@ -48,8 +48,8 @@ export abstract class BaseController {
 
   /**
    * Respond with status 200 - either with a dto or just an ok message
-   * @param res The response object
-   * @param {T} dto The dto
+   * @param res
+   * @param dto
    */
   public ok<T>(res: Response, dto?: T): Response {
     if (!!dto) {

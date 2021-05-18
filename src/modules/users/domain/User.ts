@@ -6,10 +6,11 @@
  */
 
 import { Result } from '../../../core/common/Result'
+import { Guard } from '../../../core/common/Guard'
 import { AggregateRoot } from '../../../core/domain/AggregateRoot'
 import { UniqueEntityID } from '../../../core/domain/UniqueEntityID'
 
-import { UserDomainEvent} from './events/UserDomainEvent'
+import { UserDomainEvent, UserEventType } from './events/UserDomainEvent'
 import { UserName } from './userName'
 import { UserEmail } from './userEmail'
 import { UserCredential } from './userCredential'
@@ -55,13 +56,6 @@ export class User extends AggregateRoot<IUserProps> {
   }
 
   /**
-   * Creates an id in aggregation root if not exist
-   */
-  get userId(): UserId {
-    return UserId.create(this._id).getValue()
-  }
-
-  /**
    * Getter for username
    */
   get username(): UserName {
@@ -96,12 +90,6 @@ export class User extends AggregateRoot<IUserProps> {
     return this.props.isEmailVerified
   }
 
-  set isEmailVerified(value) {
-    this.props.isEmailVerified = value
-    const userCreated = new UserDomainEvent(this.id, 'META: Changed isEmailVerified')
-    this.addDomainEvent(userCreated)
-  }
-
   /**
    * Getter for is admin user flag
    */
@@ -122,7 +110,15 @@ export class User extends AggregateRoot<IUserProps> {
    * @param {UniqueEntityID} id
    * @return {Result<User>}
    */
-  public static create(props: IUserProps, id?: UniqueEntityID): User {
+  public static create(props: IUserProps, id?: UniqueEntityID): Result<User> {
+    const guardResult = Guard.againstNullOrUndefinedBulk([
+      { argument: props.username, argumentName: 'username' },
+      { argument: props.email, argumentName: 'email' }
+    ]);
+
+    if (!guardResult.isSuccess) {
+      return Result.fail<User>(guardResult.message)
+    }
 
     const user = new User({ ...props }, id)
 
@@ -131,10 +127,15 @@ export class User extends AggregateRoot<IUserProps> {
      * Add a domain event
      */
     if(!id) {
-      //const userCreated = new UserDomainEvent(user.id, 'META: new user created')
-      //user.addDomainEvent(userCreated)
+      const meta = {
+        description: 'User entity created',
+        username: user.username.value,
+        email: user.email.value
+      }
+      const userCreatedEvent = new UserDomainEvent(user.id, UserEventType.USER_CREATED, meta)
+      user.addDomainEvent(userCreatedEvent)
     }
 
-    return user
+    return Result.ok<User>(user);
   }
 }

@@ -9,27 +9,32 @@ import express from 'express'
 import { signUpUserController } from '../../../useCases/signUpUser'
 import { deleteUserController } from '../../../useCases/deleteUser'
 import { signInUserController } from '../../../useCases/signInUser'
-import { authenticate } from '../../../service/authentication/local-strategy'
-//import { ensureLoggedIn } from '../../../service/OAuth/middleware'
-//import { middleware } from '../../../../../shared/infra/http';
 //import { getCurrentUserController } from '../../../useCases/getCurrentUser';
 //import { refreshAccessTokenController } from '../../../useCases/refreshAccessToken';
 //import { logoutController } from '../../../useCases/logout';
+import { middleware } from '../middleware'
 
+/**
+ * User resource router
+ */
 const userRouter = express.Router()
 
-userRouter.post('/', (req, res) => signUpUserController.executeImpl(req, res))
-userRouter.post('/login', (req, res) => signInUserController.executeImpl(req, res))
-userRouter.delete('/:username', (req, res) => deleteUserController.executeImpl(req, res))
+/**
+ * Sign up user to the application service
+ */
+userRouter.post('/signup', (req, res, next) => signUpUserController.execute(req, res, next))
+
+
+userRouter.post('/signin', (req, res, next) => signInUserController.execute(req, res, next))
+userRouter.delete('/:username',
+  middleware.ensureAuthenticated,
+  (req, res, next) =>  deleteUserController.execute(req, res, next)
+)
 
 /*
 userRouter.get('/me',
   middleware.ensureAuthenticated(),
   (req, res) => getCurrentUserController.execute(req, res)
-)
-
-userRouter.post('/login',
-  (req, res) => loginController.execute(req, res)
 )
 
 userRouter.post('/logout',

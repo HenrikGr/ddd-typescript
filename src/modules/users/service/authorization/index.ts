@@ -6,10 +6,7 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { OAuthService } from './OAuthService'
-import { resourceOwnerClient } from './client/ResourceOwnerClient'
+import { AuthorizationService } from './oauth2/AuthorizationService'
+import { resourceOwnerClient } from './oauth2/clients/ResourceOwnerClient'
 
-const logger = createClientLogger('OAuthService')
-const oAuthService = new OAuthService(resourceOwnerClient, logger)
-
-export { oAuthService }
+export const oAuthService = new AuthorizationService(resourceOwnerClient, createClientLogger('OAuthService'))

@@ -5,40 +5,33 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-//import { DecodedExpressRequest } from '../../infra/http/models/DecodedRequest'
 import { AppError } from '../../../../core/common/AppError'
-import { BaseController, Request, Response } from '../../../../core/infra/BaseController'
+import { BaseController, Request, Response, NextFunction } from '../../../../core/infra/BaseController'
 
 import { SignUpUser } from './SignUpUser'
 import { SignUpUserDTO } from './SignUpUserDTO'
 import { SignUpUserErrors } from './SignUpUserErrors'
 
 /**
- * Use case controller
- * @class
+ * Controller for SignUp use case
  */
 export class SignUpUserController extends BaseController {
   private useCase: SignUpUser
 
-  /**
-   * Creates a new controller instance
-   * @param useCase The use case to execute
-   */
   public constructor(useCase: SignUpUser) {
     super()
     this.useCase = useCase
   }
 
-  /**
-   * Execute the controller implementation
-   * @param req
-   * @param res
-   */
-  public async executeImpl(req: Request, res: Response): Promise<void | any> {
-    let signUpUserDTO = req.body as SignUpUserDTO
+  public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
+    const signUpUserDTO = req.body as SignUpUserDTO
 
     try {
+
+      // Run use case implementation
       const result = await this.useCase.execute(signUpUserDTO)
+
+      // If use case failed
       if (result.isLeft()) {
         const errorResult = result.value
         switch (errorResult.constructor) {
@@ -58,9 +51,11 @@ export class SignUpUserController extends BaseController {
             return this.fail(res, errorResult.error.error)
         }
       } else {
+        // use case was successful
         return this.ok(res)
       }
     } catch (err) {
+      // Unexpected error
       return this.fail(res, err)
     }
   }

@@ -43,7 +43,6 @@ export class UserEmail extends ValueObject<IUserEmailProps> {
    * @param email
    */
   public static create(email: string): Result<UserEmail> {
-    // Guards against null and undefined as well.
     const isValid = Guard.againstInvalidEmailAddress(email, 'email')
     if (!isValid.isSuccess) {
       return Result.fail<UserEmail>(isValid.message)

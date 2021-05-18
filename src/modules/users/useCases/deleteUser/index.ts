@@ -5,17 +5,12 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { createClientLogger } from '@hgc-sdk/logger'
 import { DeleteUser } from "./DeleteUser";
 import { DeleteUserController } from "./DeleteUserController";
 import { userRepo }  from '../../repos'
 
-const deleteUserController = new DeleteUserController(new DeleteUser(userRepo))
+const logger = createClientLogger('DeleteUserController')
+const useCaseLogger = createClientLogger('DeleteUserUseCase')
 
-/**
- * Export the use case controller.
- * Should be imported to the modules infrastructure
- * component managing route mappings.
- */
-export {
-  deleteUserController
-}
+export const deleteUserController = new DeleteUserController(new DeleteUser(userRepo, useCaseLogger), logger)

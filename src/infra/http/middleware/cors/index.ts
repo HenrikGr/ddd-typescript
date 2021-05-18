@@ -6,10 +6,42 @@
  */
 
 import { Express } from 'express'
-import cors from 'cors'
+import cors, { CorsOptions, CorsOptionsDelegate } from 'cors'
 
+/**
+ * Allowed origins
+ */
+const allowedOrigins = ['https://example.com', 'https://example2.com']
 
+/**
+ * Dynamically set cors options
+ * @param req
+ * @param callback
+ */
+const setCorsOptions: CorsOptionsDelegate = (req: any, callback: any) => {
+  let corsOptions: CorsOptions = {
+    origin: true,
+    credentials: true,
+    allowedHeaders: ['Accept', 'Content-Type', 'Authorization'],
+    exposedHeaders: ['WWW-Authenticate', 'X-Accepted-OAuth-Scopes', 'X-OAuth-Scopes']
+  }
+
+  const isOriginAllowed = allowedOrigins.indexOf(req.header('Origin')) !== -1
+
+  // Disable cors only in production and if origin is not valid
+  if (process.env.NODE_ENV === 'production' && !isOriginAllowed) {
+    corsOptions.origin = false
+  }
+
+  callback(null, corsOptions)
+}
+
+/**
+ * Apply cors for express app
+ * @param app
+ */
 export function applyCors(app: Express) {
   // @ts-ignore
-  app.use(cors('*'))
+  app.options('*', cors())
+  app.use(cors(setCorsOptions))
 }

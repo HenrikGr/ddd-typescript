@@ -45,7 +45,9 @@ export class AccessToken extends ValueObject<IAccessTokenProps> {
    * Factory method to create an instance and apply the validation rules
    * @param props The user name
    */
-  public static create(props: IAccessTokenProps): Result<AccessToken> {
+  public static async create(props: IAccessTokenProps): Promise<Result<AccessToken>> {
+    console.log('props: ', props)
+
     return Result.ok<AccessToken>(new AccessToken(props))
   }
 }

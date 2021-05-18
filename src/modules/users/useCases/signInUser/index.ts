@@ -9,10 +9,8 @@ import { createClientLogger } from '@hgc-sdk/logger'
 import { SignInUser } from './SignInUser'
 import { SignInUserController } from './SignInUserController'
 import { userRepo } from '../../repos'
-import { oAuthService } from '../../service/authorization'
 
 const logger = createClientLogger('SingInUserController')
 const useCaseLogger = createClientLogger('SingInUseCase')
-const signInUserController = new SignInUserController(new SignInUser(userRepo, oAuthService, useCaseLogger), logger)
 
-export { signInUserController }
+export const signInUserController = new SignInUserController(new SignInUser(userRepo, useCaseLogger), logger)

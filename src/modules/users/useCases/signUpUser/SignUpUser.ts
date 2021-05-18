@@ -8,9 +8,6 @@
 import { AppError } from '../../../../core/common/AppError'
 import { Result, left, right } from '../../../../core/common/Result'
 
-import { DomainEvents } from '../../../../core/domain/events/DomainEvents'
-import { UserDomainEvent } from '../../domain/events/UserDomainEvent'
-
 import { UseCase } from '../../../../core/domain/UseCase'
 import { SignUpUserDTO } from './SignUpUserDTO'
 import { SignUpUserResponse } from './SignUpUserResponse'
@@ -25,40 +22,15 @@ import { UserCredential } from '../../domain/userCredential'
 import { UserScope } from '../../domain/userScope'
 
 /**
- * Implements sign up use case
- * @class
+ * Use case - sign up user
  */
 export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResponse>> {
   private userRepo: IUserRepo
 
-  /**
-   * Creates a new SignUpUser instance
-   * @param userRepo The user repository
-   */
   constructor(userRepo: IUserRepo) {
     this.userRepo = userRepo
   }
 
-  /**
-   * Method to use to publish domain events for the use case
-   * @param user
-   * @protected
-   */
-  private dispatchDomainEvent(user: User) {
-    //const domainEvent = new UserDomainEvent(user.id, 'meta: User saved successfully')
-    //DomainEvents.dispatch(domainEvent)
-    // or
-    //DomainEvents.dispatchEventsForAggregate(user.id)
-    // or
-    //user.dispatchDomainEvents()
-    //
-  }
-
-  /**
-   * Validate DTO
-   * @param signUpUserDTO
-   * @private
-   */
   private validateDTO = async (signUpUserDTO: SignUpUserDTO) => {
     const userName = UserName.create(signUpUserDTO.username)
     const userEmail = UserEmail.create(signUpUserDTO.email)
@@ -74,10 +46,6 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
     }
   }
 
-  /**
-   * Execute the use case
-   * @param signUpUserDTO
-   */
   public async execute(signUpUserDTO: SignUpUserDTO): Promise<SignUpUserResponse> {
     try {
       // Validate DTO
@@ -86,7 +54,7 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         return left(new SignUpUserErrors.ValidationError(validDTO.error)) as SignUpUserResponse
       }
 
-      // The exist method checks if username or email address is valid
+      // The exist method checks if username or email address exists
       let foundUser: User = <User>(
         await this.userRepo.exists(validDTO.userName.value, validDTO.userEmail.value)
       )
@@ -104,8 +72,8 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         }
       }
 
-      // User was not found - try to create the new user entity
-      const user = User.create({
+      // User was not found - create the new user entity
+      const resultUser = User.create({
         username: validDTO.userName,
         email: validDTO.userEmail,
         credential: validDTO.userCredential,
@@ -115,12 +83,19 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         isAdminUser: false,
       })
 
+      if (resultUser.isFailure) {
+        return left(Result.fail<User>(resultUser.error.toString())) as SignUpUserResponse
+      }
+
+      const user: User = resultUser.getValue()
+
       // Save user
       const isSaved = await this.userRepo.save(user)
       if (!isSaved) {
         return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as SignUpUserResponse
       } else {
-        this.dispatchDomainEvent(user)
+        // User is persisted and it is safe to dispatch domain events in the aggregate root (User)
+        user.dispatchDomainEvents()
       }
 
       return right(Result.ok<void>())

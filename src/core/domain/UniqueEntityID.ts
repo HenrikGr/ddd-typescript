@@ -22,24 +22,15 @@
  * including the UUID used for the primary key field
  */
 
-//import { v4 as uuid } from 'uuid'
 import { Identifier } from './Identifier'
-import { ObjectId, ObjectID } from 'mongodb'
+import { ObjectId } from 'mongodb'
 
 /**
- * Implements generation of unique id
+ * Implements generation of unique identifier
  */
-export class UniqueEntityID extends Identifier<string | ObjectId>{
+export class UniqueEntityID extends Identifier<string>{
   constructor (id?: string) {
-    //super(id ? id : uuid())
-    super(id ? id: new ObjectId(id))
-  }
-
-  /**
-   * To convert the value to an ObjectId
-   */
-  toObjectId(): ObjectId {
-    return new ObjectID(super.toValue())
+    super(id ? new ObjectId(id).toHexString() : new ObjectId().toHexString())
   }
 
 }

@@ -8,7 +8,10 @@
 import { Express } from 'express'
 import helmet from 'helmet'
 
-
+/**
+ * Apply helmet service for express app
+ * @param app
+ */
 export function applyHelmet(app: Express) {
   app.use(helmet())
 }

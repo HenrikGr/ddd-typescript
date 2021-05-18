@@ -8,8 +8,11 @@
 import express from 'express'
 import { userRouter } from '../../../modules/users/infra/http/routes'
 
-const v1Router = express.Router();
+const v1Router = express.Router()
 
+/**
+ * Apply express app router map
+ */
 v1Router.use('/users', userRouter)
 
 export { v1Router }

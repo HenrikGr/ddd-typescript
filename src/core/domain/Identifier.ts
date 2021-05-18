@@ -4,7 +4,7 @@
  * @licence This source code is licensed under the MIT license described
  * and found in the LICENSE file in the root directory of this source tree.
  */
-import { ObjectId, ObjectID } from 'mongodb'
+
 
 /**
  * Implements identifier features to be used to compare domain entities

@@ -9,9 +9,9 @@ import { UniqueEntityID } from "../UniqueEntityID";
 
 export interface IDomainEvent  {
   dateTimeOccurred: Date
-  meta: any
   aggregateId: UniqueEntityID
   eventType: string
+  meta: any
 }
 
 

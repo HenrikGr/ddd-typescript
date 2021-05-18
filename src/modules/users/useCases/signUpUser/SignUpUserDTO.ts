@@ -6,7 +6,7 @@
  */
 
 /**
- * Use case DTO interface
+ * Use case DTO
  */
 export interface SignUpUserDTO {
   username: string

@@ -5,7 +5,9 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { ObjectId } from 'mongodb'
+import isEmail from 'validator/lib/isEmail'
+import isLength from 'validator/lib/isLength'
+import isMongoId from 'validator/lib/isMongoId'
 
 /**
  * Guard result interface
@@ -30,7 +32,6 @@ export type GuardArgumentCollection = IGuardArgument[]
 
 /**
  * Implements guard features for validation purposes
- * @class
  */
 export class Guard {
   /**
@@ -74,12 +75,12 @@ export class Guard {
   }
 
   /**
-   * Guard against invalid ObjectId format
+   * Guard against invalid EntityId format
    * @param argument
    * @param argumentName
    */
-  public static againstInvalidObjectId(argument: any, argumentName: string): IGuardResult {
-    return ObjectId.isValid(argument)
+  public static againstInvalidEntityId(argument: any, argumentName: string): IGuardResult {
+    return isMongoId(argument)
       ? { isSuccess: true, message: '' }
       : { isSuccess: false, message: `${argumentName} is an invalid id.` }
   }
@@ -90,12 +91,14 @@ export class Guard {
    * @param argumentName
    */
   public static againstInvalidEmailAddress(argument: any, argumentName: string): IGuardResult {
-    const isMissing = this.againstNullOrUndefined(argument, argumentName)
-    if(!isMissing.isSuccess) {
-      return isMissing
+    const result = this.againstNullOrUndefined(argument, argumentName)
+    if (!result.isSuccess) {
+      return result
     }
-    const validEmailRegEx = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-    return validEmailRegEx.test(argument)
+
+    return isEmail(argument, {
+      allow_utf8_local_part: false, // Do not allow NON utf-8 chars
+    })
       ? { isSuccess: true, message: '' }
       : { isSuccess: false, message: `${argumentName} is not a valid format.` }
   }
@@ -106,10 +109,33 @@ export class Guard {
    * @param argumentName
    */
   public static againstInvalidPasswordFormat(argument: any, argumentName: string): IGuardResult {
+    const result = this.againstNullOrUndefined(argument, argumentName)
+    if (!result.isSuccess) {
+      return result
+    }
     const validPasswordRegEx = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/
     return validPasswordRegEx.test(argument)
       ? { isSuccess: true, message: '' }
-      : { isSuccess: false, message: `${argumentName} must be 6 to 20 characters and at least one numeric, one uppercase and one lowercase` }
+      : {
+          isSuccess: false,
+          message: `${argumentName} must be 6 to 20 characters and at least one numeric, one uppercase and one lowercase`,
+        }
+  }
+
+  /**
+   * Guard against invalid username
+   * @param argument
+   * @param argumentName
+   */
+  public static againstInvalidUserName(argument: any, argumentName: string): IGuardResult {
+    const result = this.againstNullOrUndefined(argument, argumentName)
+    if (!result.isSuccess) {
+      return result
+    }
+
+    return isLength(argument, { min: 5, max: 12 })
+      ? { isSuccess: true, message: '' }
+      : { isSuccess: false, message: `${argumentName} must be 5 to 15 characters.` }
   }
 
   /**
@@ -164,7 +190,12 @@ export class Guard {
     if (isValid) {
       return { isSuccess: true, message: '' }
     } else {
-      return { isSuccess: false, message: `${argumentName} isn't oneOf the correct types in ${JSON.stringify(validValues)}. Got "${value}".` }
+      return {
+        isSuccess: false,
+        message: `${argumentName} isn't oneOf the correct types in ${JSON.stringify(
+          validValues
+        )}. Got "${value}".`,
+      }
     }
   }
 

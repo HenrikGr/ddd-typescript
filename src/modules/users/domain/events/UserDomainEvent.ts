@@ -8,22 +8,31 @@
 import { IDomainEvent } from '../../../../core/domain/events/IDomainEvent'
 import { UniqueEntityID } from '../../../../core/domain/UniqueEntityID'
 
+export enum UserEventType {
+  USER_CREATED = 'User Created',
+  USER_DELETED = 'User Deleted',
+}
+
 /**
  * Represent a domain event for user aggregate
  * @class
  */
 export class UserDomainEvent implements IDomainEvent {
   public dateTimeOccurred: Date
-  public meta: any
   public aggregateId: UniqueEntityID
-  public eventType: string = 'UserDomainEvent'
+  public eventType: string
+  public meta: any
 
-  constructor(aggregateId:UniqueEntityID , meta: any, type?: string) {
+  /**
+   * Create a new domain event for the user module
+   * @param aggregateId
+   * @param type
+   * @param meta
+   */
+  constructor(aggregateId: UniqueEntityID, type: string, meta?: any) {
     this.dateTimeOccurred = new Date()
     this.aggregateId = aggregateId
+    this.eventType = type
     this.meta = meta
-    this.eventType = 'UserCreated'
-
-    console.info(`[UserDomainEvent Created]:`, meta)
   }
 }

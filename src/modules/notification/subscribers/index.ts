@@ -5,16 +5,14 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { BaseDao } from '@hgc-sdk/mongo-db'
-import { dbClient } from '../../../infra/database/mongo/DbClient'
-import { UserDomainEvents } from "./events/UserDomainEvents";
-import { EventModel } from '../infra/database/models/EventModel'
-import { MongoEventLogger } from '../infra/database/implementation/MongoEventLogger'
+import { createClientLogger } from '@hgc-sdk/logger'
+import { baseDao } from '../../../infra/database'
+import { UsersEventSubscriber } from "./UsersEventSubscriber"
+import { MongoEventDao } from '../infra/database/implementations/MongoEventDao'
+import { SaveAuditData } from '../useCases/saveAuditData'
 
-const dao = new BaseDao('UserDb', dbClient)
-
-const eventModel = new EventModel(dao)
-const eventLogger = new MongoEventLogger(eventModel)
+const eventDao = new MongoEventDao(baseDao, createClientLogger('EventDao'))
+const saveAudit = new SaveAuditData(eventDao)
 
 // Subscribers
-new UserDomainEvents(eventLogger)
+new UsersEventSubscriber(saveAudit, createClientLogger('UsersEventSubscriber'))

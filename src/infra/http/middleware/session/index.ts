@@ -6,9 +6,10 @@
  */
 
 import { Express } from 'express'
-import session from 'express-session'
-import MongoStore from 'connect-mongo'
-import { connectionOpts } from '../../../database/mongo/DbClient'
+import { AppConfiguration } from '../../config'
+import session, { Cookie } from 'express-session'
+import { loadSessionConfig } from './config'
+import { loadSessionStore } from './stores/MongoSessionStore'
 
 declare module 'express-session' {
   interface Session {
@@ -17,25 +18,26 @@ declare module 'express-session' {
   }
 }
 
+/**
+ * Apply session management to express app
+ * @param app
+ * @param appConfig
+ */
+export function applySession(app: Express, appConfig: AppConfiguration) {
+  const { sessionConfig, cookieConfig } = loadSessionConfig(appConfig)
+  const { sessionStore } = loadSessionStore(appConfig)
 
-export function applySession(app: Express) {
+  // In production mode - set the secure flag to true to use HTTPS
+  if (app.get('env') === 'production') {
+    app.set('trust proxy', 1) // trust first proxy
+    cookieConfig.secure = true
+  }
+
   app.use(
     session({
-      resave: false,
-      saveUninitialized: false,
-      secret: 'secret',
-      cookie: {
-        httpOnly: true,
-        secure: true,
-        sameSite: true, // cors
-        maxAge: 60 * 60 * 1000, // Time is in milliseconds
-      },
-      store: MongoStore.create({
-        mongoUrl: connectionOpts.connectionURI,
-        mongoOptions: connectionOpts.options,
-        dbName: 'UserDb',
-      }),
+      ...sessionConfig,
+      cookie: cookieConfig,
+      store: sessionStore,
     })
   )
-
 }

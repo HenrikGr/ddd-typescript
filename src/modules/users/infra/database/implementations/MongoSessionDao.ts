@@ -7,7 +7,7 @@
 
 import { ServiceLogger } from '@hgc-sdk/logger'
 import { IBaseDao } from '@hgc-sdk/mongo-db'
-import { ISessionDao } from '../sessionDao'
+import { ISessionDao } from '../ISessionDao'
 
 /**
  * Implements the SessionDao API

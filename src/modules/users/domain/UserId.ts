@@ -32,7 +32,7 @@ export class UserId extends Entity<any> {
    * @param userId
    */
   public static create(userId: UniqueEntityID): Result<UserId> {
-    const result = Guard.againstInvalidObjectId(userId.toValue(), 'userId')
+    const result = Guard.againstInvalidEntityId(userId.toValue(), 'userId')
     if (!result.isSuccess) {
       return Result.fail<UserId>(result.message)
     }

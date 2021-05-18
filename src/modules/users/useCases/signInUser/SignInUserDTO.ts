@@ -8,17 +8,5 @@
 export interface SignInDTO {
   username: string
   password: string
-  scope: string
 }
 
-type Bearer = string
-
-export interface SignInResponseDTO {
-  access_token: string
-  token_type: Bearer
-  expires_in: number
-  refresh_token: string
-  scope: string
-  expires_at: Date
-  user?: any
-}

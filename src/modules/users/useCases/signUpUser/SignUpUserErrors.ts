@@ -8,6 +8,9 @@
 import { UseCaseError } from '../../../../core/domain/UseCaseError'
 import { Result } from '../../../../core/common/Result'
 
+/**
+ * Use case error namespace and error classes
+ */
 export namespace SignUpUserErrors {
   export class ValidationError extends Result<UseCaseError> {
     constructor(parameter: string) {

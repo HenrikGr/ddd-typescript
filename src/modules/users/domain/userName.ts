@@ -17,18 +17,9 @@ export interface IUserNameProps {
 }
 
 /**
- * Implements the UserName value object that encapsulate
- * domain level validation for a user email address
- * @extends ValueObject
- * @class
+ * Implements the UserName value object
  */
 export class UserName extends ValueObject<IUserNameProps> {
-  /**
-   * Validation rules
-   */
-  public static maxLength: number = 15
-  public static minLength: number = 5
-
   /**
    * Creates a new instance of the UserName value object
    * @param props
@@ -46,17 +37,12 @@ export class UserName extends ValueObject<IUserNameProps> {
 
   /**
    * Factory method to create an instance and apply the validation rules
-   * @param username The user name
+   * @param username
    */
   public static create(username: string): Result<UserName> {
-    const minLengthResult = Guard.againstAtLeast(this.minLength, username, 'username')
-    if (!minLengthResult.isSuccess) {
-      return Result.fail<UserName>(minLengthResult.message)
-    }
-
-    const maxLengthResult = Guard.againstAtMost(this.maxLength, username, 'username')
-    if (!maxLengthResult.isSuccess) {
-      return Result.fail<UserName>(maxLengthResult.message)
+    const resultUserName = Guard.againstInvalidUserName(username, 'username')
+    if (!resultUserName.isSuccess) {
+      return Result.fail<UserName>(resultUserName.message)
     }
 
     return Result.ok<UserName>(new UserName({username: username}))
