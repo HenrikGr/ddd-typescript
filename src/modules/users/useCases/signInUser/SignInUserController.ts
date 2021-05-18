@@ -13,6 +13,7 @@ import { SignInUser } from './SignInUser'
 import { SignInDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
 import { User } from '../../domain/User'
+import { JWT } from '../../service/authentication/jwt'
 
 /**
  * Implements controller logic for the request/response
@@ -21,11 +22,13 @@ import { User } from '../../domain/User'
 export class SignInUserController extends BaseController {
   private useCase: SignInUser
   private logger: ServiceLogger
+  private jwt: JWT
 
-  public constructor(useCase: SignInUser, logger: ServiceLogger) {
+  public constructor(useCase: SignInUser, logger: ServiceLogger, jwt: JWT) {
     super()
     this.useCase = useCase
     this.logger = logger
+    this.jwt = jwt
   }
 
   private updateSession = (req: Request, user: User) => {
