@@ -1,14 +1,8 @@
 # The core module
 
-The core module contains;
-
-- a common module for generic application services,
-- a domain module for common domain classes,
-- an infra module for common ports to the application.
-
 ## Common module
 
-The common module contains application services used in other modules. The services are generic and
+The common module contains application artifacts used throughout the application. The artifacts are generic and
 provide features such as;
 
 - dealing with unexpected errors,
@@ -19,9 +13,9 @@ provide features such as;
 
 ## Domain module
 
-The domain module contains abstract classes and interfaces to support domain driven design, you find
-abstract Entity, ValueObject, UseCases, Identifier, AggregationRoot, DomainEvents, etc. 
+The domain module contains typical domain driven design artifacts such as Entity, ValueObject, UseCases, Identifier, 
+AggregationRoot, DomainEvents, UseCase, etc. 
 
-## infra module
+## Infra module
 
-The infra module contains of ports, controllers, to be used to map domain use cases to the application.
+The infra module contains generic application artifacts to be used as ports to map infrastructure with domain layer.
