@@ -5,66 +5,66 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { JWT } from './jwt/JWT'
-import { IDTokenClaims, IEmailClaims, IProfileClaims } from './jwt/IClaims'
+import { JWT, IDToken } from './jwt/JWT'
+import { IDTokenClaims } from './jwt/IClaims'
 import { User } from '../../domain/User'
-
-export type IDToken = string
+import { NextFunction, Request, Response } from 'express'
+import { ServiceLogger } from '@hgc-sdk/logger'
 
 export interface IAuthenticationService {
   createIDToken(user: User): IDToken
-  verifyIDToken(token: IDToken): IDTokenClaims
-  //createRefreshToken (): RefreshToken;
-  //getTokens (username: string): Promise<string[]>;
-  //saveAuthenticatedUser (user: User): Promise<void>;
-  //deAuthenticateUser(username: string): Promise<void>;
-  //refreshTokenExists (refreshToken: RefreshToken): Promise<boolean>;
-  //getUserNameFromRefreshToken (refreshToken: RefreshToken): Promise<string>;
 }
 
-export class AuthenticationService implements IAuthenticationService {
-  private readonly exp: number
+
+export class AuthenticationService {
   private jwt: JWT
+  private logger: ServiceLogger
 
-  constructor(jwt: JWT) {
-    this.exp = Math.floor(Date.now() / 1000) + 60 * 60 * 10 // Default 10 hour
+  constructor(jwt: JWT, logger: ServiceLogger) {
     this.jwt = jwt
+    this.logger = logger
   }
 
-  private scopeMatch(scope: string, targetScope: string) {
-    if (scope === '') {
-      return false
-    }
+  public createIDToken(user: User): IDToken {
+    return this.jwt.createIDToken(user)
 
-    return scope.split(' ').every((s) => s === targetScope)
   }
 
-  createIDToken(user: User): IDToken {
-    const scope = user.scope.value
-    const idTokenClaims: IDTokenClaims = {
-      exp: this.exp,
-      sub: user.id.toString(),
-      scope: scope,
-    }
-
-    const emailClaims: IEmailClaims = this.scopeMatch(scope, 'email')
-      ? { email: 'hgc-ab@outlook.com', email_verified: false }
-      : {}
-
-    const profileClaims: IProfileClaims = this.scopeMatch(scope, 'profile')
-      ? { name: 'Name', nickname: 'nickName' }
-      : {}
-
-    const claims: IDTokenClaims = {
-      ...idTokenClaims,
-      ...emailClaims,
-      ...profileClaims,
-    }
-
-    return this.jwt.generateToken(claims)
-  }
-
-  verifyIDToken(token: IDToken): IDTokenClaims {
+  public decodeIdToken(token: IDToken): IDTokenClaims {
     return this.jwt.verifyToken(token)
   }
+
+  public isAuthenticated(req: Request, res: Response, next: NextFunction): void {
+    if (!(req.session && req.session.user)) {
+      this.logger.verbose('ensureAuthenticated: NO user session found - redirecting')
+      return res.redirect('/api/v1/users/signin')
+    }
+
+    this.logger.verbose(`ensureAuthenticated: ${req.session.user.username} is logged in`)
+    next()
+  }
+
+  private extractToken = (req: Request) => {
+    if (req.headers.authorization && req.headers.authorization.split(' ')[0] === 'Bearer') {
+      return req.headers.authorization.split(' ')[1]
+    } else if (req.query && req.query.token) {
+      return req.query.token
+    }
+    return null
+  }
+
+
+  public isAuthorized(req: Request, res: Response, next: NextFunction): void {
+    const token = this.extractToken(req)
+    if(!token) {
+      this.logger.verbose('No Authorization token')
+    } else {
+      this.logger.verbose('Authorization token exist', token)
+      this.logger.verbose('')
+
+    }
+
+    next()
+  }
+
 }

@@ -5,9 +5,11 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { ServiceLogger } from '@hgc-sdk/logger'
 import jwt, { Algorithm } from 'jsonwebtoken'
-import { IJWTConfigurationReader, JWTConfiguration } from './JWTConfigurationReader'
-import { IDTokenClaims } from './IClaims'
+import { JWTConfiguration } from './JWTConfigurationReader'
+import { IDTokenClaims, IEmailClaims, IProfileClaims } from './IClaims'
+import { User } from '../../../domain/User'
 
 /**
  * Standard JWT claims
@@ -20,6 +22,8 @@ interface JWTStandardClaims {
   iat?: number  // Time at which the JWT was issued; can be used to determine age of the JWT
 }
 
+export type IDToken = string
+
 /**
  * Implements methods to create and verify jwt tokens
  */
@@ -28,12 +32,15 @@ export class JWT {
   private readonly jwtClaims: JWTStandardClaims
   private readonly privateKey: string
   private readonly publicKey: string
+  private readonly idTokenLifeTime: number
+  private logger: ServiceLogger
 
   /**
    * Creates a new JWT instance
    * @param config
+   * @param logger
    */
-  constructor(config: JWTConfiguration) {
+  constructor(config: JWTConfiguration, logger: ServiceLogger) {
     const jwtConfig = config
     this.alg = 'RS256'
     this.privateKey = jwtConfig.privateKey
@@ -43,13 +50,15 @@ export class JWT {
       aud: jwtConfig.aud,
       exp: 0,
     }
+    this.idTokenLifeTime = 60 * 60 * 10 // 10 hour
+    this.logger = logger
   }
 
-  /**
-   * Generate/sign a token
-   * @param claims
-   */
-  generateToken(claims: IDTokenClaims) {
+  private scopeMatch(scope: string, targetScope: string): string | undefined {
+    return scope.split(' ').find((s) => s === targetScope)
+  }
+
+  private generateToken(claims: IDTokenClaims) {
     const payload = {
       ...this.jwtClaims,
       ...claims, // Override exp from IDTokenClaims
@@ -59,14 +68,47 @@ export class JWT {
   }
 
   /**
-   * Verify a generated token and return the decoded token
+   * Verify token - decode
    * @param token
    */
-  verifyToken(token: string): IDTokenClaims {
+  public verifyToken(token: string): IDTokenClaims {
     // TODO: Ensure changes to aud and iss is not possible
     return jwt.verify(token, this.publicKey, {
       audience: this.jwtClaims.aud,
       issuer: this.jwtClaims.iss,
     }) as IDTokenClaims
   }
+
+  /**
+   * Create a IDToken
+   * @param user
+   */
+  public createIDToken(user: User): IDToken {
+    this.logger.verbose('createIDToken: ', user.username.value, user.scope.value)
+    const scope = user.scope.value
+    const idTokenClaims: IDTokenClaims = {
+      exp: Math.floor(Date.now() / 1000) + this.idTokenLifeTime,
+      sub: user.id.toString(),
+      scope: scope,
+    }
+
+    const emailClaims: IEmailClaims = this.scopeMatch(scope, 'email')
+      ? { email: 'hgc-ab@outlook.com', email_verified: false }
+      : {}
+    this.logger.verbose('emailClaims: ', emailClaims)
+
+    const profileClaims: IProfileClaims = this.scopeMatch(scope, 'profile')
+      ? { name: 'Name', nickname: 'nickName' }
+      : {}
+    this.logger.verbose('profileClaims: ', profileClaims)
+
+    const claims: IDTokenClaims = {
+      ...idTokenClaims,
+      ...emailClaims,
+      ...profileClaims,
+    }
+
+    return this.generateToken(claims)
+  }
+
 }
