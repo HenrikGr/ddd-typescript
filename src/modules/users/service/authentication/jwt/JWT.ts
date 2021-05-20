@@ -8,18 +8,31 @@
 import { ServiceLogger } from '@hgc-sdk/logger'
 import jwt, { Algorithm } from 'jsonwebtoken'
 import { JWTConfiguration } from './JWTConfigurationReader'
-import { IDTokenClaims, IEmailClaims, IProfileClaims } from './IClaims'
-import { User } from '../../../domain/User'
 
-/**
- * Standard JWT claims
- */
 interface JWTStandardClaims {
   iss: string   // Issuer of the JWT
   aud: string   // Recipient for which the JWT is intended, clientId for the application
   exp: number   // Time after which the JWT expires
   nbf?: number  // Time before which the JWT must not be accepted for processing
   iat?: number  // Time at which the JWT was issued; can be used to determine age of the JWT
+}
+
+export interface IEmailClaims {
+  email?: string
+  email_verified?: boolean
+}
+
+export interface IProfileClaims {
+  name?: string
+  nickname?: string
+  picture?: string
+}
+
+export interface IDTokenClaims extends IEmailClaims, IProfileClaims {
+  sub: string     // Contains user id, is retrieved after authentication
+  scope: string   // email: to get email and email_verified, profile to get name, nickname and picture
+  exp: number     // Expire time
+  nonce?: string  // Use this to connect a session id with an ID token
 }
 
 export type IDToken = string
@@ -32,7 +45,6 @@ export class JWT {
   private readonly jwtClaims: JWTStandardClaims
   private readonly privateKey: string
   private readonly publicKey: string
-  private readonly idTokenLifeTime: number
   private logger: ServiceLogger
 
   /**
@@ -50,21 +62,7 @@ export class JWT {
       aud: jwtConfig.aud,
       exp: 0,
     }
-    this.idTokenLifeTime = 60 * 60 * 10 // 10 hour
     this.logger = logger
-  }
-
-  private scopeMatch(scope: string, targetScope: string): string | undefined {
-    return scope.split(' ').find((s) => s === targetScope)
-  }
-
-  private generateToken(claims: IDTokenClaims) {
-    const payload = {
-      ...this.jwtClaims,
-      ...claims, // Override exp from IDTokenClaims
-    }
-
-    return jwt.sign(payload, this.privateKey, { algorithm: this.alg })
   }
 
   /**
@@ -81,34 +79,15 @@ export class JWT {
 
   /**
    * Create a IDToken
-   * @param user
+   * @param claims
    */
-  public createIDToken(user: User): IDToken {
-    this.logger.verbose('createIDToken: ', user.username.value, user.scope.value)
-    const scope = user.scope.value
-    const idTokenClaims: IDTokenClaims = {
-      exp: Math.floor(Date.now() / 1000) + this.idTokenLifeTime,
-      sub: user.id.toString(),
-      scope: scope,
+  public createIDToken(claims: IDTokenClaims): IDToken {
+    const payload = {
+      ...this.jwtClaims,
+      ...claims, // Override exp which is set to 0 default
     }
 
-    const emailClaims: IEmailClaims = this.scopeMatch(scope, 'email')
-      ? { email: 'hgc-ab@outlook.com', email_verified: false }
-      : {}
-    this.logger.verbose('emailClaims: ', emailClaims)
-
-    const profileClaims: IProfileClaims = this.scopeMatch(scope, 'profile')
-      ? { name: 'Name', nickname: 'nickName' }
-      : {}
-    this.logger.verbose('profileClaims: ', profileClaims)
-
-    const claims: IDTokenClaims = {
-      ...idTokenClaims,
-      ...emailClaims,
-      ...profileClaims,
-    }
-
-    return this.generateToken(claims)
+    return jwt.sign(payload, this.privateKey, { algorithm: this.alg })
   }
 
 }

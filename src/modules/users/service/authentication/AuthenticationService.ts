@@ -5,8 +5,7 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { JWT, IDToken } from './jwt/JWT'
-import { IDTokenClaims } from './jwt/IClaims'
+import { JWT, IDToken, IDTokenClaims, IProfileClaims, IEmailClaims } from './jwt/JWT'
 import { User } from '../../domain/User'
 import { NextFunction, Request, Response } from 'express'
 import { ServiceLogger } from '@hgc-sdk/logger'
@@ -18,15 +17,45 @@ export interface IAuthenticationService {
 
 export class AuthenticationService {
   private jwt: JWT
+  private readonly idTokenLifeTime: number
   private logger: ServiceLogger
 
   constructor(jwt: JWT, logger: ServiceLogger) {
     this.jwt = jwt
+    this.idTokenLifeTime = 60 * 60 * 10 // 10 hour
     this.logger = logger
   }
 
+  private scopeMatch(scope: string, targetScope: string): string | undefined {
+    return scope.split(' ').find((s) => s === targetScope)
+  }
+
   public createIDToken(user: User): IDToken {
-    return this.jwt.createIDToken(user)
+    this.logger.verbose('createIDToken: ', user.username.value, user.scope.value)
+    const scope = user.scope.value
+    const idTokenClaims: IDTokenClaims = {
+      exp: Math.floor(Date.now() / 1000) + this.idTokenLifeTime,
+      sub: user.id.toString(),
+      scope: scope,
+    }
+
+    const emailClaims: IEmailClaims = this.scopeMatch(scope, 'email')
+      ? { email: 'hgc-ab@outlook.com', email_verified: false }
+      : {}
+    this.logger.verbose('emailClaims: ', emailClaims)
+
+    const profileClaims: IProfileClaims = this.scopeMatch(scope, 'profile')
+      ? { name: 'Name', nickname: 'nickName' }
+      : {}
+    this.logger.verbose('profileClaims: ', profileClaims)
+
+    const claims: IDTokenClaims = {
+      ...idTokenClaims,
+      ...emailClaims,
+      ...profileClaims,
+    }
+
+    return this.jwt.createIDToken(claims)
 
   }
 
