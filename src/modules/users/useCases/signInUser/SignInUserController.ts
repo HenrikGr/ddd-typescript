@@ -13,7 +13,8 @@ import { SignInUser } from './SignInUser'
 import { SignInDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
 import { User } from '../../domain/User'
-import { JWT } from '../../service/authentication/jwt'
+import { IAuthenticationService } from '../../service/authentication/AuthenticationService'
+
 
 /**
  * Implements controller logic for the request/response
@@ -22,13 +23,13 @@ import { JWT } from '../../service/authentication/jwt'
 export class SignInUserController extends BaseController {
   private useCase: SignInUser
   private logger: ServiceLogger
-  private jwt: JWT
+  private authService: IAuthenticationService
 
-  public constructor(useCase: SignInUser, logger: ServiceLogger, jwt: JWT) {
+  public constructor(useCase: SignInUser, authService: IAuthenticationService, logger: ServiceLogger) {
     super()
     this.useCase = useCase
     this.logger = logger
-    this.jwt = jwt
+    this.authService = authService
   }
 
   private updateSession = (req: Request, user: User) => {
@@ -42,12 +43,7 @@ export class SignInUserController extends BaseController {
   }
 
   public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
-    const { body } = req
-    const signInDTO = {
-      username: body.username,
-      password: body.password
-    } as SignInDTO
-
+    const signInDTO = req.body as SignInDTO
     this.logger.verbose('executeImpl: ', signInDTO.username)
 
     try {
@@ -76,8 +72,10 @@ export class SignInUserController extends BaseController {
         // Set user in express session
         this.updateSession(req, result.value.getValue())
 
+        const idToken = this.authService.createIDToken(result.value.getValue())
+
         this.logger.verbose('executeImpl: ended gracefully')
-        return this.ok(res)
+        return this.ok(res, { idToken: idToken })
       }
     } catch (err) {
       return this.fail(res, err)

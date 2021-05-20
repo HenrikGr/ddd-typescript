@@ -10,9 +10,14 @@ import { SignInUser } from './SignInUser'
 import { SignInUserController } from './SignInUserController'
 import { userRepo } from '../../repos'
 import { JWT, JWTConfigurationReader } from '../../service/authentication/jwt'
+import { AuthenticationService } from '../../service/authentication/AuthenticationService'
 
-const jwt = new JWT(JWTConfigurationReader.readEnvironment())
-const logger = createClientLogger('SingInUserController')
-const useCaseLogger = createClientLogger('SingInUseCase')
 
-export const signInUserController = new SignInUserController(new SignInUser(userRepo, useCaseLogger), logger, jwt)
+export const signInUserController = new SignInUserController(
+  new SignInUser(userRepo, createClientLogger('SingInUseCase')),
+  new AuthenticationService(
+    new JWT(JWTConfigurationReader.readEnvironment(), createClientLogger('JWT')),
+    createClientLogger('AuthenticationService')
+  ),
+  createClientLogger('SingInUserController')
+)
