@@ -52,6 +52,7 @@ export class UserMiddleware {
       this.logger.verbose('No Authorization token')
     } else {
       this.logger.verbose('Authorization token exist', token)
+      this.logger.verbose('')
 
     }
 
