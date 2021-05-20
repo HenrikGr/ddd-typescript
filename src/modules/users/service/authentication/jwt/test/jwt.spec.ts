@@ -1,9 +1,11 @@
 import { strict as assert } from 'assert'
 
 require('dotenv').config()
+import { createClientLogger } from '@hgc-sdk/logger'
 import { JWTConfigurationReader } from '../JWTConfigurationReader'
-import { JWT } from '../JWT'
-import { IDTokenClaims, IEmailClaims, IProfileClaims } from '../IClaims'
+import { JWT, IDToken, IDTokenClaims, IProfileClaims, IEmailClaims } from '../JWT'
+
+const logger = createClientLogger('JWTTestLogger')
 
 describe('JWT', function () {
   assert(process.env.JWT_ISS, 'process.env.SERVER_KEY_FILE missing')
@@ -24,7 +26,7 @@ describe('JWT', function () {
 
   describe('JWT Instance', () => {
     test('Create a JWT instance -> should contain correct properties', () => {
-      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment(), logger)
 
       expect(jwt).toBeInstanceOf(JWT)
       expect(jwt).toHaveProperty('privateKey')
@@ -41,8 +43,8 @@ describe('JWT', function () {
         scope: 'email',
       }
 
-      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
-      const token = jwt.generateToken(claims)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment(), logger)
+      const token = jwt.createIDToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
       expect(decodedIdToken).toBeTruthy()
@@ -58,8 +60,8 @@ describe('JWT', function () {
         scope: 'profile',
       }
 
-      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
-      const token = jwt.generateToken(claims)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment(), logger)
+      const token = jwt.createIDToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
       expect(decodedIdToken).toBeTruthy()
@@ -87,8 +89,8 @@ describe('JWT', function () {
         ...emailClaims
       }
 
-      const jwt = new JWT(JWTConfigurationReader.readEnvironment())
-      const token = jwt.generateToken(claims)
+      const jwt = new JWT(JWTConfigurationReader.readEnvironment(), logger)
+      const token = jwt.createIDToken(claims)
       const decodedIdToken = jwt.verifyToken(token)
 
       console.log('combined claims: ', decodedIdToken)
