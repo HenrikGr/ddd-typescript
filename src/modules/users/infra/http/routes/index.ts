@@ -26,10 +26,8 @@ userRouter.post('/signup', (req, res, next) => signUpUserController.execute(req,
 
 
 userRouter.post('/signin', (req, res, next) => signInUserController.execute(req, res, next))
-userRouter.delete('/:username',
-  middleware.ensureAuthenticated,
-  (req, res, next) =>  deleteUserController.execute(req, res, next)
-)
+
+userRouter.delete('/:username', (req, res, next) =>  deleteUserController.execute(req, res, next))
 
 /*
 userRouter.get('/me',
