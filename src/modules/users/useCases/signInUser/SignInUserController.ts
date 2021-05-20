@@ -9,11 +9,12 @@ import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { BaseController, Request, Response, NextFunction } from '../../../../core/infra/BaseController'
 
+import { IAuthenticationService } from '../../service/authentication/AuthenticationService'
+
 import { SignInUser } from './SignInUser'
 import { SignInDTO } from './SignInUserDTO'
 import { SignInUserErrors } from './SignInUserErrors'
 import { User } from '../../domain/User'
-import { IAuthenticationService } from '../../service/authentication/AuthenticationService'
 
 
 /**
@@ -28,8 +29,8 @@ export class SignInUserController extends BaseController {
   public constructor(useCase: SignInUser, authService: IAuthenticationService, logger: ServiceLogger) {
     super()
     this.useCase = useCase
-    this.logger = logger
     this.authService = authService
+    this.logger = logger
   }
 
   private updateSession = (req: Request, user: User) => {
