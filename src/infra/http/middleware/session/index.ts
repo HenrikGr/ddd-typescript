@@ -7,14 +7,23 @@
 
 import { Express } from 'express'
 import { AppConfiguration } from '../../config'
-import session, { Cookie } from 'express-session'
+import session, { Cookie, SessionData } from 'express-session'
 import { loadSessionConfig } from './config'
 import { loadSessionStore } from './stores/MongoSessionStore'
 
+interface UserSession {
+  username: string
+  email: string
+  scope: string
+  isEmailVerified: boolean
+  isAdminUser: boolean
+}
+
 declare module 'express-session' {
-  interface Session {
+  interface SessionData {
     [key: string]: any
     cookie: Cookie
+    user: UserSession
   }
 }
 
