@@ -6,7 +6,7 @@
  */
 
 import { Express } from 'express'
-import { AppConfiguration } from '../config'
+import { IAppConfiguration } from '../config'
 import { applyBodyParser } from './bodyparser'
 import { applyCors } from './cors'
 import { applyCompression } from './compression'
@@ -19,7 +19,7 @@ import { applyLogger } from './logger'
  * @param app
  * @param appConfig
  */
-export function loadExpressMiddleware(app: Express, appConfig: AppConfiguration) {
+export function loadExpressMiddleware(app: Express, appConfig: IAppConfiguration) {
   applyLogger(app)
   //applyHelmet(app)
   applyCors(app)

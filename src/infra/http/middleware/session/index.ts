@@ -6,12 +6,15 @@
  */
 
 import { Express } from 'express'
-import { AppConfiguration } from '../../config'
-import session, { Cookie, SessionData } from 'express-session'
+import { IAppConfiguration } from '../../config'
+import session, { Cookie } from 'express-session'
 import { loadSessionConfig } from './config'
 import { loadSessionStore } from './stores/MongoSessionStore'
 
-interface UserSession {
+/**
+ * Current user
+ */
+export interface CurrentUser {
   username: string
   email: string
   scope: string
@@ -19,11 +22,14 @@ interface UserSession {
   isAdminUser: boolean
 }
 
+/**
+ * Re-declare SessionData from express-session module with Cookie and CurrentUser
+ */
 declare module 'express-session' {
   interface SessionData {
     [key: string]: any
     cookie: Cookie
-    user: UserSession
+    user: CurrentUser
   }
 }
 
@@ -32,7 +38,7 @@ declare module 'express-session' {
  * @param app
  * @param appConfig
  */
-export function applySession(app: Express, appConfig: AppConfiguration) {
+export function applySession(app: Express, appConfig: IAppConfiguration) {
   const { sessionConfig, cookieConfig } = loadSessionConfig(appConfig)
   const { sessionStore } = loadSessionStore(appConfig)
 

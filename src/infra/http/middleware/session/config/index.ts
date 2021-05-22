@@ -6,7 +6,7 @@
  */
 
 import { strict as assert } from 'assert'
-import { AppConfiguration } from '../../../config'
+import { IAppConfiguration } from '../../../config'
 
 assert(process.env.SESSION_SECRET, 'process.env.SESSION_SECRET missing')
 assert(process.env.SESSION_COOKIE_NAME, 'process.env.SESSION_DURATION missing')
@@ -26,7 +26,7 @@ const sessionConfig = {
  */
 const cookieConfig = {
   httpOnly: true, // Will not allow client-side JavaScript to see the cookie in document.cookie
-  secure: false,  // Ensures the cookie is sent only over HTTP(S), protect against cross-site scripting attacks.
+  secure: false, // Ensures the cookie is sent only over HTTP(S), protect against cross-site scripting attacks.
   sameSite: true, // cors
 }
 
@@ -34,7 +34,7 @@ const cookieConfig = {
  * Load session settings
  * @param appConfig
  */
-export function loadSessionConfig(appConfig: AppConfiguration) {
+export function loadSessionConfig(appConfig: IAppConfiguration) {
   return {
     sessionConfig,
     cookieConfig,

@@ -9,7 +9,7 @@ import { strict as assert } from 'assert'
 /**
  * Application configuration interface
  */
-export interface AppConfiguration {
+export interface IAppConfiguration {
   appName: string
   version: string
   port: number | string
@@ -24,7 +24,7 @@ assert(process.env.NODE_ENV, 'process.env.NODE_ENV missing')
 /**
  * Application configuration
  */
-export const appConfig: AppConfiguration = {
+export const appConfig: IAppConfiguration = {
   appName: process.env.APP_NAME,
   version: process.env.APP_VERSION,
   port: parseInt(process.env.PORT),

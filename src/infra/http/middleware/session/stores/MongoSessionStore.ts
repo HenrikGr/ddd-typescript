@@ -6,7 +6,7 @@
  */
 
 import { strict as assert } from 'assert'
-import { AppConfiguration } from '../../../config'
+import { IAppConfiguration } from '../../../config'
 import MongoStore from 'connect-mongo'
 import { connectionOpts } from '../../../../database'
 
@@ -21,15 +21,14 @@ const sessionDuration = parseInt(process.env.SESSION_DURATION) / 1000
  * Load session store
  * @param appConfig
  */
-export function loadSessionStore(appConfig: AppConfiguration) {
-
+export function loadSessionStore(appConfig: IAppConfiguration) {
   return {
     sessionStore: MongoStore.create({
       mongoUrl: connectionOpts.connectionURI,
       mongoOptions: connectionOpts.options,
       dbName: 'UserDb',
       ttl: sessionDuration,
-      autoRemove: appConfig.environment === 'production' ? "disabled" : "native"
-    })
+      autoRemove: appConfig.environment === 'production' ? 'disabled' : 'native',
+    }),
   }
 }
