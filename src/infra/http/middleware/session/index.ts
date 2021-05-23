@@ -14,7 +14,7 @@ import { loadSessionStore } from './stores/MongoSessionStore'
 /**
  * Current user
  */
-export interface CurrentUser {
+export interface ICurrentUser {
   username: string
   email: string
   scope: string
@@ -29,7 +29,7 @@ declare module 'express-session' {
   interface SessionData {
     [key: string]: any
     cookie: Cookie
-    user: CurrentUser
+    user: ICurrentUser
   }
 }
 
