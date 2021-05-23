@@ -5,10 +5,12 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { SessionData } from 'express-session'
+
 /**
  * DeleteUserDTO interface
  */
 export interface DeleteUserDTO {
-  [index: string]: string;
   username: string
+  session: SessionData
 }

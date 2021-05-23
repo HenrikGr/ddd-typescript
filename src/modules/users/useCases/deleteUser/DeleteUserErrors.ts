@@ -18,6 +18,14 @@ export namespace DeleteUserErrors {
     }
   }
 
+  export class NotAuthorized extends Result<UseCaseError> {
+    constructor(parameter?: string) {
+      super(false, {
+        message: parameter ? `${parameter}` : `Request was not authorized`,
+      } as UseCaseError)
+    }
+  }
+
   export class UserNotFound extends Result<UseCaseError> {
     constructor(parameter: string) {
       super(false, {
@@ -29,7 +37,7 @@ export namespace DeleteUserErrors {
   export class UserIsMarkedForDeletion extends Result<UseCaseError> {
     constructor(parameter: string) {
       super(false, {
-        message: `The user ${parameter} is marked for deletion: Contact support for assistance.`,
+        message: `The user ${parameter} is marked for deletion and will be removed.`,
       } as UseCaseError)
     }
   }

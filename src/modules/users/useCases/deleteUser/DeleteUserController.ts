@@ -14,31 +14,56 @@ import { DeleteUserDTO } from './DeleteUserDTO'
 import { DeleteUserErrors } from './DeleteUserErrors'
 
 /**
- * Implements controller logic for the request/response
- * cycle when deleting a user.
+ * Implements controller logic for the request/response cycle
  */
 export class DeleteUserController extends BaseController {
+
+  /**
+   * Delete User use case
+   * @private
+   */
   private useCase: DeleteUser
+
+  /**
+   * Controller logger
+   * @private
+   */
   private logger: ServiceLogger
 
+  /**
+   * Creates a new controller instance
+   * @param useCase
+   * @param logger
+   */
   public constructor(useCase: DeleteUser, logger: ServiceLogger) {
     super()
     this.useCase = useCase
     this.logger = logger
   }
 
+  /**
+   * Run the controller implementation
+   * @param req
+   * @param res
+   */
   public async executeImpl(req: Request, res: Response): Promise<void | any> {
-    const deleteUserDTO = req.params as DeleteUserDTO
-    const session = req.session
-
-    this.logger.verbose('deleteUserDTO: ', deleteUserDTO)
-    this.logger.verbose('session: ', session)
+    const deleteUserDTO = {
+      username: req.params.username,
+      session: req.session
+    } as DeleteUserDTO
 
     try {
+      this.logger.info('executeImpl - started: ', deleteUserDTO.username)
+
       const result = await this.useCase.execute(deleteUserDTO)
+
+      // Check if use case failed
       if (result.isLeft()) {
         const errorResult = result.value
+        this.logger.error('executeImpl: ', errorResult.errorValue())
         switch (errorResult.constructor) {
+          case DeleteUserErrors.NotAuthorized:
+            return this.unauthorized(res, errorResult.errorValue().message)
           case DeleteUserErrors.ValidationError:
             return this.badRequest(res, errorResult.errorValue().message)
           case DeleteUserErrors.UserNotFound:
@@ -50,12 +75,15 @@ export class DeleteUserController extends BaseController {
           case AppError.UnexpectedError:
             return this.fail(res, errorResult.error.message)
           default:
-            return this.fail(res, errorResult.errorValue())
+            return this.fail(res, errorResult.error.message)
         }
       } else {
+
+        this.logger.info('executeImpl - ended gracefully')
         return this.ok(res)
       }
     } catch (err) {
+      this.logger.error('executeImpl: ', err.message)
       return this.fail(res, err)
     }
   }
