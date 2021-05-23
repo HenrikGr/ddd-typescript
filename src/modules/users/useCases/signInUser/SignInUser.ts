@@ -60,7 +60,7 @@ export class SignInUser implements UseCase<SignInDTO, Promise<UseCaseResponse>> 
    * @param signInDTO
    */
   public async execute(signInDTO: SignInDTO): Promise<UseCaseResponse> {
-    this.logger.verbose('execute: ', signInDTO.username)
+    this.logger.info('execute - started: ', signInDTO.username)
 
     try {
       // Validate DTO
@@ -86,7 +86,7 @@ export class SignInUser implements UseCase<SignInDTO, Promise<UseCaseResponse>> 
         return left(new SignInUserErrors.UserIsMarkedForDeletion()) as UseCaseResponse
       }
 
-      this.logger.verbose('execute: ended gracefully')
+      this.logger.info('execute - ended gracefully')
       return right(Result.ok<User>(foundUser)) as UseCaseResponse
     } catch (err) {
       return left(new AppError.UnexpectedError(err)) as UseCaseResponse

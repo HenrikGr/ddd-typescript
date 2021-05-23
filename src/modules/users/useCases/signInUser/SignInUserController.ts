@@ -45,7 +45,7 @@ export class SignInUserController extends BaseController {
 
   public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
     const signInDTO = req.body as SignInDTO
-    this.logger.verbose('executeImpl: ', signInDTO.username)
+    this.logger.info('executeImpl - started: ', signInDTO.username)
 
     try {
 
@@ -54,6 +54,7 @@ export class SignInUserController extends BaseController {
 
       if (result.isLeft()) {
         const errorResult = result.value
+        this.logger.error('executeImpl: ', errorResult.error)
         switch (errorResult.constructor) {
           case SignInUserErrors.ValidationError:
             return this.badRequest(res, errorResult.errorValue().message)
@@ -70,13 +71,11 @@ export class SignInUserController extends BaseController {
         }
       } else {
 
-        // Set user in express session
-        this.updateSession(req, result.value.getValue())
+        const user = result.value.getValue()
+        this.updateSession(req, user)
 
-        const idToken = this.authService.createIDToken(result.value.getValue())
-
-        this.logger.verbose('executeImpl: ended gracefully')
-        return this.ok(res, { idToken: idToken })
+        this.logger.info('executeImpl - ended gracefully')
+        return this.ok(res)
       }
     } catch (err) {
       return this.fail(res, err)
