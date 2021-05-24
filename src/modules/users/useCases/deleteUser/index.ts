@@ -6,11 +6,11 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { DeleteUser } from "./DeleteUser";
-import { DeleteUserController } from "./DeleteUserController";
-import { userRepo }  from '../../repos'
+import { DeleteUser } from './DeleteUser'
+import { DeleteUserController } from './DeleteUserController'
+import { userRepo } from '../../repos'
 
-const logger = createClientLogger('DeleteUserController')
-const useCaseLogger = createClientLogger('DeleteUserUseCase')
-
-export const deleteUserController = new DeleteUserController(new DeleteUser(userRepo, useCaseLogger), logger)
+export const deleteUserController = new DeleteUserController(
+  new DeleteUser(userRepo, createClientLogger('DeleteUser')),
+  createClientLogger('DeleteUserController')
+)

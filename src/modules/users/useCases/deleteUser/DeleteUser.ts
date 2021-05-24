@@ -17,7 +17,6 @@ import { DeleteUserErrors } from './DeleteUserErrors'
 
 import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
-import { SignUpUserResponse } from '../signUpUser/SignUpUserResponse'
 
 /**
  * Use case response
@@ -35,7 +34,6 @@ type UseCaseResponse = Either<
  * Implementation of the DeleteUser use case
  */
 export class DeleteUser implements UseCase<DeleteUserDTO, Promise<UseCaseResponse>> {
-
   /**
    * User repository
    * @private
@@ -93,7 +91,7 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<UseCaseRespons
 
       // Only administrators should be able to delete a users already marked for deletion
       if (foundUser.isDeleted && !deleteUserDTO.session.user.isAdminUser) {
-        return left(new DeleteUserErrors.UserIsMarkedForDeletion(userName.value)) as SignUpUserResponse
+        return left(new DeleteUserErrors.UserIsMarkedForDeletion(userName.value)) as UseCaseResponse
       }
 
       // Delete the user entity from database
@@ -105,8 +103,7 @@ export class DeleteUser implements UseCase<DeleteUserDTO, Promise<UseCaseRespons
         //foundUser.dispatchDomainEvents()
       }
 
-
-      this.logger.info('execute: ended gracefully')
+      this.logger.info('execute - ended gracefully')
       return right(Result.ok<void>())
     } catch (err) {
       return left(new AppError.UnexpectedError(err)) as UseCaseResponse
