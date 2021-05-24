@@ -24,13 +24,14 @@ export class MongoUserRepo implements IUserRepo {
   }
 
   public async exists(username: string, email?: string): Promise<User | boolean> {
-    this.logger.verbose('exist: ', username, email)
+    this.logger.info('exist started: ', username, email)
     const foundUser = await this.userDao.exist(username, email)
     if (foundUser) {
+      this.logger.info('exist - ended gracefully with user found')
       return UserMap.toDomain(foundUser)
     }
 
-    this.logger.verbose('exist: user did not exist')
+    this.logger.info('exist - ended gracefully with user NOT found')
     return false
   }
 
