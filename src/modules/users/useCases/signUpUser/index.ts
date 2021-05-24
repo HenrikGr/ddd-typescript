@@ -5,12 +5,13 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
-import { SignUpUser } from "./SignUpUser";
-import { SignUpUserController } from "./SignUpUserController";
-import { userRepo }  from '../../repos'
+import { createClientLogger } from '@hgc-sdk/logger'
+import { SignUpUser } from './SignUpUser'
+import { SignUpUserController } from './SignUpUserController'
+import { userRepo } from '../../repos'
 
-const signUpUserController = new SignUpUserController(new SignUpUser(userRepo))
+export const signUpUserController = new SignUpUserController(
+  new SignUpUser(userRepo, createClientLogger('SignUpUser')),
+  createClientLogger('SignUpUserController')
+)
 
-export {
-  signUpUserController
-}

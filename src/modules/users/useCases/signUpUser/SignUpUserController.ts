@@ -5,6 +5,7 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { BaseController, Request, Response, NextFunction } from '../../../../core/infra/BaseController'
 
@@ -13,27 +14,51 @@ import { SignUpUserDTO } from './SignUpUserDTO'
 import { SignUpUserErrors } from './SignUpUserErrors'
 
 /**
- * Controller for SignUp use case
+ * Implements controller logic for the request/response cycle
  */
 export class SignUpUserController extends BaseController {
+
+  /**
+   * SignUp user use case
+   * @private
+   */
   private useCase: SignUpUser
 
-  public constructor(useCase: SignUpUser) {
+  /**
+   * Controller logger
+   * @private
+   */
+  private logger: ServiceLogger
+
+  /**
+   * Create a new controller instance
+   * @param useCase
+   * @param logger
+   */
+  public constructor(useCase: SignUpUser, logger: ServiceLogger) {
     super()
     this.useCase = useCase
+    this.logger = logger
   }
 
+  /**
+   * Run the controller implementation
+   * @param req
+   * @param res
+   * @param next
+   */
   public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
     const signUpUserDTO = req.body as SignUpUserDTO
 
     try {
+      this.logger.info('executeImpl - started: ', signUpUserDTO.username)
 
-      // Run use case implementation
       const result = await this.useCase.execute(signUpUserDTO)
 
-      // If use case failed
+      // Check if use case failed
       if (result.isLeft()) {
         const errorResult = result.value
+        this.logger.error('executeImpl: ', errorResult.errorValue())
         switch (errorResult.constructor) {
           case SignUpUserErrors.ValidationError:
             return this.badRequest(res, errorResult.errorValue().message)
@@ -51,11 +76,11 @@ export class SignUpUserController extends BaseController {
             return this.fail(res, errorResult.error.error)
         }
       } else {
-        // use case was successful
+        this.logger.info('executeImpl - ended gracefully')
         return this.ok(res)
       }
     } catch (err) {
-      // Unexpected error
+      this.logger.error('executeImpl: ', err.message)
       return this.fail(res, err)
     }
   }

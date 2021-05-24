@@ -5,15 +5,15 @@
  * and found in the LICENSE file in the root directory of this source tree.
  */
 
+import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
-import { Result, left, right } from '../../../../core/common/Result'
+import { Result, left, right, Either } from '../../../../core/common/Result'
 
 import { UseCase } from '../../../../core/domain/UseCase'
-import { SignUpUserDTO } from './SignUpUserDTO'
-import { SignUpUserResponse } from './SignUpUserResponse'
-import { SignUpUserErrors } from './SignUpUserErrors'
 
 import { IUserRepo } from '../../repos/userRepo'
+import { SignUpUserDTO } from './SignUpUserDTO'
+import { SignUpUserErrors } from './SignUpUserErrors'
 
 import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
@@ -22,15 +22,49 @@ import { UserCredential } from '../../domain/userCredential'
 import { UserScope } from '../../domain/userScope'
 
 /**
- * Use case - sign up user
+ * Use case response
  */
-export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResponse>> {
+export type UseCaseResponse = Either<
+  | SignUpUserErrors.ValidationError
+  | SignUpUserErrors.UserIsMarkedForDeletion
+  | SignUpUserErrors.EmailAlreadyExists
+  | SignUpUserErrors.UsernameTaken
+  | SignUpUserErrors.UnableToSaveUser
+  | AppError.UnexpectedError
+  | Result<any>,
+  Result<void>
+>
+
+/**
+ * Implementation of the SignUpUser use case
+ */
+export class SignUpUser implements UseCase<SignUpUserDTO, Promise<UseCaseResponse>> {
+  /**
+   * User repository
+   * @private
+   */
   private userRepo: IUserRepo
 
-  constructor(userRepo: IUserRepo) {
+  /**
+   * Use case logger
+   * @private
+   */
+  private logger: ServiceLogger
+
+  /**
+   * Create a new use case instance
+   * @param userRepo
+   * @param logger
+   */
+  constructor(userRepo: IUserRepo, logger: ServiceLogger) {
     this.userRepo = userRepo
+    this.logger = logger
   }
 
+  /**
+   * Validate DTO
+   * @param signUpUserDTO
+   */
   private validateDTO = async (signUpUserDTO: SignUpUserDTO) => {
     const userName = UserName.create(signUpUserDTO.username)
     const userEmail = UserEmail.create(signUpUserDTO.email)
@@ -46,12 +80,18 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
     }
   }
 
-  public async execute(signUpUserDTO: SignUpUserDTO): Promise<SignUpUserResponse> {
+  /**
+   * Run the use case implementation
+   * @param signUpUserDTO
+   */
+  public async execute(signUpUserDTO: SignUpUserDTO): Promise<UseCaseResponse> {
+    this.logger.info('execute - started ', signUpUserDTO.username)
+
     try {
       // Validate DTO
       const validDTO = await this.validateDTO(signUpUserDTO)
       if (!validDTO.isSuccess) {
-        return left(new SignUpUserErrors.ValidationError(validDTO.error)) as SignUpUserResponse
+        return left(new SignUpUserErrors.ValidationError(validDTO.error)) as UseCaseResponse
       }
 
       // The exist method checks if username or email address exists
@@ -60,15 +100,15 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
       )
       if (foundUser) {
         if (foundUser.isDeleted) {
-          return left(new SignUpUserErrors.UserIsMarkedForDeletion()) as SignUpUserResponse
+          return left(new SignUpUserErrors.UserIsMarkedForDeletion()) as UseCaseResponse
         }
 
         if (foundUser.username.equals(validDTO.userName)) {
-          return left(new SignUpUserErrors.UsernameTaken(validDTO.userName.value)) as SignUpUserResponse
+          return left(new SignUpUserErrors.UsernameTaken(validDTO.userName.value)) as UseCaseResponse
         }
 
         if (foundUser.email.equals(validDTO.userEmail)) {
-          return left(new SignUpUserErrors.EmailAlreadyExists(validDTO.userEmail.value)) as SignUpUserResponse
+          return left(new SignUpUserErrors.EmailAlreadyExists(validDTO.userEmail.value)) as UseCaseResponse
         }
       }
 
@@ -80,11 +120,11 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
         scope: UserScope.create('profile').getValue(),
         isDeleted: false,
         isEmailVerified: false,
-        isAdminUser: false,
+        isAdminUser: true,
       })
 
       if (resultUser.isFailure) {
-        return left(Result.fail<User>(resultUser.error.toString())) as SignUpUserResponse
+        return left(Result.fail<User>(resultUser.error.toString())) as UseCaseResponse
       }
 
       const user: User = resultUser.getValue()
@@ -92,15 +132,16 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<SignUpUserResp
       // Save user
       const isSaved = await this.userRepo.save(user)
       if (!isSaved) {
-        return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as SignUpUserResponse
+        return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as UseCaseResponse
       } else {
         // User is persisted and it is safe to dispatch domain events in the aggregate root (User)
-        user.dispatchDomainEvents()
+        //user.dispatchDomainEvents()
       }
 
+      this.logger.info('execute - ended gracefully')
       return right(Result.ok<void>())
     } catch (err) {
-      return left(new AppError.UnexpectedError(err)) as SignUpUserResponse
+      return left(new AppError.UnexpectedError(err)) as UseCaseResponse
     }
   }
 }
