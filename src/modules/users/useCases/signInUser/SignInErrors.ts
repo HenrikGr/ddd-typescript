@@ -9,9 +9,9 @@ import { UseCaseError } from '../../../../core/domain/UseCaseError'
 import { Result } from '../../../../core/common/Result'
 
 /**
- * Use case error namespace and error classes
+ * SignInErrors namespace containing possible errors for the use case.
  */
-export namespace SignUpUserErrors {
+export namespace SignInErrors {
   export class ValidationError extends Result<UseCaseError> {
     constructor(parameter: string) {
       super(false, {
@@ -28,26 +28,18 @@ export namespace SignUpUserErrors {
     }
   }
 
-  export class EmailAlreadyExists extends Result<UseCaseError> {
-    constructor(parameter: string) {
+  export class InvalidCredential extends Result<UseCaseError> {
+    constructor(parameter?: string) {
       super(false, {
-        message: `The email ${parameter} already exists`,
+        message: `Username or password is invalid.`,
       } as UseCaseError)
     }
   }
 
-  export class UsernameTaken extends Result<UseCaseError> {
-    constructor(parameter: string) {
+  export class NotAuthorized extends Result<UseCaseError> {
+    constructor(parameter?: string) {
       super(false, {
-        message: `The username ${parameter} is already taken`,
-      } as UseCaseError)
-    }
-  }
-
-  export class UnableToSaveUser extends Result<UseCaseError> {
-    constructor(parameter: string) {
-      super(false, {
-        message: `Unable to save ${parameter}: Contact support for assistance.`,
+        message: parameter ? `${parameter}` : `Request was not authorized`,
       } as UseCaseError)
     }
   }

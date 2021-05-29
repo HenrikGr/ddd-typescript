@@ -9,20 +9,19 @@ import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { BaseController, Request, Response, NextFunction } from '../../../../core/infra/BaseController'
 
-import { SignUpUser } from './SignUpUser'
-import { SignUpUserDTO } from './SignUpUserDTO'
-import { SignUpUserErrors } from './SignUpUserErrors'
+import { SignUp } from './SignUp'
+import { SignUpDTO } from './SignUpDTO'
+import { SignUpErrors } from './SignUpErrors'
 
 /**
- * Implements controller logic for the request/response cycle
+ * Implementation for the API request - response cycle
  */
-export class SignUpUserController extends BaseController {
-
+export class SignUpController extends BaseController {
   /**
-   * SignUp user use case
+   * SignUp - use case
    * @private
    */
-  private useCase: SignUpUser
+  private useCase: SignUp
 
   /**
    * Controller logger
@@ -31,11 +30,11 @@ export class SignUpUserController extends BaseController {
   private logger: ServiceLogger
 
   /**
-   * Create a new controller instance
+   * Creates a new controller instance
    * @param useCase
    * @param logger
    */
-  public constructor(useCase: SignUpUser, logger: ServiceLogger) {
+  public constructor(useCase: SignUp, logger: ServiceLogger) {
     super()
     this.useCase = useCase
     this.logger = logger
@@ -48,27 +47,25 @@ export class SignUpUserController extends BaseController {
    * @param next
    */
   public async executeImpl(req: Request, res: Response, next: NextFunction): Promise<void | any> {
-    const signUpUserDTO = req.body as SignUpUserDTO
+    const signUpDTO = req.body as SignUpDTO
+    this.logger.info('executeImpl - started: ', signUpDTO.username)
 
     try {
-      this.logger.info('executeImpl - started: ', signUpUserDTO.username)
 
-      const result = await this.useCase.execute(signUpUserDTO)
-
-      // Check if use case failed
+      const result = await this.useCase.execute(signUpDTO)
       if (result.isLeft()) {
         const errorResult = result.value
         this.logger.error('executeImpl: ', errorResult.errorValue())
         switch (errorResult.constructor) {
-          case SignUpUserErrors.ValidationError:
+          case SignUpErrors.ValidationError:
             return this.badRequest(res, errorResult.errorValue().message)
-          case SignUpUserErrors.UserIsMarkedForDeletion:
+          case SignUpErrors.UserIsMarkedForDeletion:
             return this.conflict(res, errorResult.errorValue().message)
-          case SignUpUserErrors.UsernameTaken:
+          case SignUpErrors.UsernameTaken:
             return this.conflict(res, errorResult.errorValue().message)
-          case SignUpUserErrors.EmailAlreadyExists:
+          case SignUpErrors.EmailAlreadyExists:
             return this.conflict(res, errorResult.errorValue().message)
-          case SignUpUserErrors.UnableToSaveUser:
+          case SignUpErrors.UnableToSaveUser:
             return this.fail(res, errorResult.errorValue().message)
           case AppError.UnexpectedError:
             return this.fail(res, errorResult.errorValue().message)

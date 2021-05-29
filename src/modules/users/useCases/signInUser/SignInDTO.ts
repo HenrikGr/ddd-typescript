@@ -6,10 +6,10 @@
  */
 
 /**
- * Use case DTO
+ * SignInDTO
  */
-export interface SignUpUserDTO {
+export interface SignInDTO {
   username: string
-  email: string
   password: string
 }
+

@@ -6,12 +6,10 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { SignUpUser } from './SignUpUser'
-import { SignUpUserController } from './SignUpUserController'
+import { SignUp } from './SignUp'
+import { SignUpController } from './SignUpController'
 import { userRepo } from '../../repos'
 
-export const signUpUserController = new SignUpUserController(
-  new SignUpUser(userRepo, createClientLogger('SignUpUser')),
-  createClientLogger('SignUpUserController')
-)
-
+export const signUpUserController = new SignUpController(
+  new SignUp(userRepo, createClientLogger('SignUp')),
+  createClientLogger('SignUpController'))

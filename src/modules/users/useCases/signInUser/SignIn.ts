@@ -4,15 +4,16 @@
  * @licence This source code is licensed under the MIT license described
  * and found in the LICENSE file in the root directory of this source tree.
  */
+
 import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { Result, left, right, Either } from '../../../../core/common/Result'
 
-import { UseCase } from '../../../../core/domain/UseCase'
+import { IUseCase } from '../../../../core/domain/UseCase'
 
 import { IUserRepo } from '../../repos/userRepo'
-import { SignInDTO } from './SignInUserDTO'
-import { SignInUserErrors } from './SignInUserErrors'
+import { SignInDTO } from './SignInDTO'
+import { SignInErrors } from './SignInErrors'
 
 import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
@@ -22,27 +23,45 @@ import { UserCredential } from '../../domain/userCredential'
  * Use case response
  */
 type UseCaseResponse = Either<
-  | SignInUserErrors.ValidationError
-  | SignInUserErrors.InvalidCredential
-  | SignInUserErrors.UserIsMarkedForDeletion
-  | SignInUserErrors.NotAuthorized
+  | SignInErrors.ValidationError
+  | SignInErrors.InvalidCredential
+  | SignInErrors.UserIsMarkedForDeletion
+  | SignInErrors.NotAuthorized
   | AppError.UnexpectedError,
   Result<User>
 >
 
 /**
- * Implementation of the SignInUser use case
+ * Implementation of the use case - SignIn
  */
-export class SignInUser implements UseCase<SignInDTO, Promise<UseCaseResponse>> {
+export class SignIn implements IUseCase<SignInDTO, Promise<UseCaseResponse>> {
+  /**
+   * User repository
+   * @private
+   */
   private userRepo: IUserRepo
+
+  /**
+   * Use case logger
+   * @private
+   */
   private logger: ServiceLogger
 
+  /**
+   * Creates a new use case instance
+   * @param userRepo
+   * @param logger
+   */
   constructor(userRepo: IUserRepo, logger: ServiceLogger) {
     this.userRepo = userRepo
     this.logger = logger
   }
 
-  private validateDTO = async (signInDTO: SignInDTO) => {
+  /**
+   * Validate the SignInDTO
+   * @param signInDTO
+   */
+  private validateSignInDTO = async (signInDTO: SignInDTO) => {
     const userName = UserName.create(signInDTO.username)
     const userCredential = await UserCredential.create(signInDTO.password)
     const combinedResult = Result.combine([userName, userCredential])
@@ -56,39 +75,50 @@ export class SignInUser implements UseCase<SignInDTO, Promise<UseCaseResponse>> 
   }
 
   /**
-   * Execute the use case
+   * Run the use case implementation
    * @param signInDTO
    */
   public async execute(signInDTO: SignInDTO): Promise<UseCaseResponse> {
     this.logger.info('execute - started: ', signInDTO.username)
 
     try {
-      // Validate DTO
-      const validDTO = await this.validateDTO(signInDTO)
+      /**
+       * Validate the SignInDTO
+       */
+      const validDTO = await this.validateSignInDTO(signInDTO)
       if (!validDTO.isSuccess) {
-        return left(new SignInUserErrors.ValidationError(validDTO.error)) as UseCaseResponse
+        return left(new SignInErrors.ValidationError(validDTO.error)) as UseCaseResponse
       }
 
-      // Check if username exist
-      const foundUser = <User>await this.userRepo.exists(signInDTO.username)
+      /**
+       * Check if user exist in database
+       */
+      const foundUser = (await this.userRepo.exists(signInDTO.username)) as User
       if (!foundUser) {
-        // Did not find username
-        return left(new SignInUserErrors.InvalidCredential()) as UseCaseResponse
+        return left(new SignInErrors.InvalidCredential()) as UseCaseResponse
       }
 
-      // Check password on found user
+      /**
+       * Validate password
+       */
       if (!(await foundUser.credential.compare(signInDTO.password))) {
-        return left(new SignInUserErrors.InvalidCredential()) as UseCaseResponse
+        return left(new SignInErrors.InvalidCredential()) as UseCaseResponse
       }
 
-      // Check if account disabled
+      /**
+       * Check if existing user is marked for deletion
+       */
       if (foundUser.isDeleted) {
-        return left(new SignInUserErrors.UserIsMarkedForDeletion()) as UseCaseResponse
+        return left(new SignInErrors.UserIsMarkedForDeletion()) as UseCaseResponse
       }
 
+      /**
+       * Return the existing user entity
+       */
       this.logger.info('execute - ended gracefully')
       return right(Result.ok<User>(foundUser)) as UseCaseResponse
     } catch (err) {
+      this.logger.error('execute: ', err.message)
       return left(new AppError.UnexpectedError(err)) as UseCaseResponse
     }
   }

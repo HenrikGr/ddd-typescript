@@ -9,11 +9,11 @@ import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { Result, left, right, Either } from '../../../../core/common/Result'
 
-import { UseCase } from '../../../../core/domain/UseCase'
+import { IUseCase } from '../../../../core/domain/UseCase'
 
 import { IUserRepo } from '../../repos/userRepo'
-import { SignUpUserDTO } from './SignUpUserDTO'
-import { SignUpUserErrors } from './SignUpUserErrors'
+import { SignUpDTO } from './SignUpDTO'
+import { SignUpErrors } from './SignUpErrors'
 
 import { User } from '../../domain/User'
 import { UserName } from '../../domain/userName'
@@ -25,20 +25,20 @@ import { UserScope } from '../../domain/userScope'
  * Use case response
  */
 export type UseCaseResponse = Either<
-  | SignUpUserErrors.ValidationError
-  | SignUpUserErrors.UserIsMarkedForDeletion
-  | SignUpUserErrors.EmailAlreadyExists
-  | SignUpUserErrors.UsernameTaken
-  | SignUpUserErrors.UnableToSaveUser
+  | SignUpErrors.ValidationError
+  | SignUpErrors.UserIsMarkedForDeletion
+  | SignUpErrors.EmailAlreadyExists
+  | SignUpErrors.UsernameTaken
+  | SignUpErrors.UnableToSaveUser
   | AppError.UnexpectedError
   | Result<any>,
   Result<void>
 >
 
 /**
- * Implementation of the SignUpUser use case
+ * Implementation of the use case - SignUp
  */
-export class SignUpUser implements UseCase<SignUpUserDTO, Promise<UseCaseResponse>> {
+export class SignUp implements IUseCase<SignUpDTO, Promise<UseCaseResponse>> {
   /**
    * User repository
    * @private
@@ -62,13 +62,13 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<UseCaseRespons
   }
 
   /**
-   * Validate DTO
-   * @param signUpUserDTO
+   * Validate the SignUpDTO
+   * @param signUpDTO
    */
-  private validateDTO = async (signUpUserDTO: SignUpUserDTO) => {
-    const userName = UserName.create(signUpUserDTO.username)
-    const userEmail = UserEmail.create(signUpUserDTO.email)
-    const userCredential = await UserCredential.create(signUpUserDTO.password)
+  private validateSignUpDTO = async (signUpDTO: SignUpDTO) => {
+    const userName = UserName.create(signUpDTO.username)
+    const userEmail = UserEmail.create(signUpDTO.email)
+    const userCredential = await UserCredential.create(signUpDTO.password)
     const combinedResult = Result.combine([userName, userEmail, userCredential])
 
     return {
@@ -82,37 +82,50 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<UseCaseRespons
 
   /**
    * Run the use case implementation
-   * @param signUpUserDTO
+   * @param signUpDTO
    */
-  public async execute(signUpUserDTO: SignUpUserDTO): Promise<UseCaseResponse> {
-    this.logger.info('execute - started ', signUpUserDTO.username)
+  public async execute(signUpDTO: SignUpDTO): Promise<UseCaseResponse> {
+    this.logger.info('execute - started ', signUpDTO.username)
 
     try {
-      // Validate DTO
-      const validDTO = await this.validateDTO(signUpUserDTO)
+      /**
+       * Validate the SignUpDTO
+       */
+      const validDTO = await this.validateSignUpDTO(signUpDTO)
       if (!validDTO.isSuccess) {
-        return left(new SignUpUserErrors.ValidationError(validDTO.error)) as UseCaseResponse
+        return left(new SignUpErrors.ValidationError(validDTO.error)) as UseCaseResponse
       }
 
-      // The exist method checks if username or email address exists
-      let foundUser: User = <User>(
-        await this.userRepo.exists(validDTO.userName.value, validDTO.userEmail.value)
-      )
+      /**
+       * Check if user exist in database and perform som validation
+       */
+      const foundUser = <User>await this.userRepo.exists(validDTO.userName.value, validDTO.userEmail.value)
       if (foundUser) {
+        /**
+         * Chek if existing user is marked for deletion
+         */
         if (foundUser.isDeleted) {
-          return left(new SignUpUserErrors.UserIsMarkedForDeletion()) as UseCaseResponse
+          return left(new SignUpErrors.UserIsMarkedForDeletion()) as UseCaseResponse
         }
 
+        /**
+         * Validate existing user's username
+         */
         if (foundUser.username.equals(validDTO.userName)) {
-          return left(new SignUpUserErrors.UsernameTaken(validDTO.userName.value)) as UseCaseResponse
+          return left(new SignUpErrors.UsernameTaken(validDTO.userName.value)) as UseCaseResponse
         }
 
+        /**
+         * Check existing user's email address
+         */
         if (foundUser.email.equals(validDTO.userEmail)) {
-          return left(new SignUpUserErrors.EmailAlreadyExists(validDTO.userEmail.value)) as UseCaseResponse
+          return left(new SignUpErrors.EmailAlreadyExists(validDTO.userEmail.value)) as UseCaseResponse
         }
       }
 
-      // User was not found - create the new user entity
+      /**
+       * Try creating a new user entity object
+       */
       const resultUser = User.create({
         username: validDTO.userName,
         email: validDTO.userEmail,
@@ -123,24 +136,34 @@ export class SignUpUser implements UseCase<SignUpUserDTO, Promise<UseCaseRespons
         isAdminUser: true,
       })
 
+      // Failed creating a user entity object
       if (resultUser.isFailure) {
         return left(Result.fail<User>(resultUser.error.toString())) as UseCaseResponse
       }
 
+      // Get the user entity object
       const user: User = resultUser.getValue()
 
-      // Save user
+      /**
+       * Save the user to the database
+       */
       const isSaved = await this.userRepo.save(user)
       if (!isSaved) {
-        return left(new SignUpUserErrors.UnableToSaveUser(validDTO.userName.value)) as UseCaseResponse
+        return left(new SignUpErrors.UnableToSaveUser(validDTO.userName.value)) as UseCaseResponse
       } else {
-        // User is persisted and it is safe to dispatch domain events in the aggregate root (User)
-        //user.dispatchDomainEvents()
+        /**
+         * If user is saved to the database - dispatch a domain event
+         */
+        user.dispatchDomainEvents()
       }
 
+      /**
+       * Return use case
+       */
       this.logger.info('execute - ended gracefully')
       return right(Result.ok<void>())
     } catch (err) {
+      this.logger.error('execute: ', err.message)
       return left(new AppError.UnexpectedError(err)) as UseCaseResponse
     }
   }

@@ -6,18 +6,11 @@
  */
 
 import { createClientLogger } from '@hgc-sdk/logger'
-import { SignInUser } from './SignInUser'
-import { SignInUserController } from './SignInUserController'
+import { SignIn } from './SignIn'
+import { SignInController } from './SignInController'
 import { userRepo } from '../../repos'
-import { JWT, JWTConfigurationReader } from '../../service/authentication/jwt'
-import { AuthenticationService } from '../../service/authentication/AuthenticationService'
 
-
-export const signInUserController = new SignInUserController(
-  new SignInUser(userRepo, createClientLogger('SingInUseCase')),
-  new AuthenticationService(
-    new JWT(JWTConfigurationReader.readEnvironment(), createClientLogger('JWT')),
-    createClientLogger('AuthenticationService')
-  ),
-  createClientLogger('SingInUserController')
+export const signInUserController = new SignInController(
+  new SignIn(userRepo, createClientLogger('SingIn')),
+  createClientLogger('SingInController')
 )
