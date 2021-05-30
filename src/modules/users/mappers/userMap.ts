@@ -14,7 +14,6 @@ import { UserScope } from '../domain/userScope'
 import { UserCredential } from '../domain/userCredential'
 import { CreateUserDTO } from '../dtos/CreateUserDTO'
 import { UpdateUserDTO } from '../dtos/UpdateUserDTO'
-import { UserId } from '../domain/UserId'
 
 /**
  * Implements data mapper logic for the User
@@ -23,7 +22,9 @@ import { UserId } from '../domain/UserId'
  * - From Domain to DTO
  * - From Domain to Persistence
  * - From Persistence to Domain
- * @class
+ *
+ * @implements Mapper
+ * @class UserMap
  */
 export class UserMap implements Mapper<User> {
 
