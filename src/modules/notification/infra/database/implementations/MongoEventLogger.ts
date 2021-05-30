@@ -7,16 +7,37 @@
 
 import { IBaseDao } from '@hgc-sdk/mongo-db'
 import { ServiceLogger } from '@hgc-sdk/logger'
-import { IEventDao } from '../IEventDao'
+import { IEventLogger } from '../IEventLogger'
+import { UserDomainEvent } from '../../../../users/domain/events/UserDomainEvent'
 
 /**
- * Implements the data access object for domain events
+ * Implements logic to store events in mongo database
  */
-export class MongoEventDao implements IEventDao {
+export class MongoEventLogger implements IEventLogger {
+  /**
+   * Base DAO for MongoDb
+   * @private
+   */
   private dao: IBaseDao
+
+  /**
+   * Console logger
+   * @private
+   */
   private logger : ServiceLogger
+
+  /**
+   * Collection name to store the events
+   * @private
+   */
   private readonly collectionName: string
 
+  /**
+   * Creates a new instance
+   * @param dao
+   * @param logger
+   * @param collectionName
+   */
   public constructor(dao: IBaseDao, logger: ServiceLogger, collectionName?: string) {
     this.dao = dao
     this.logger = logger
@@ -24,14 +45,13 @@ export class MongoEventDao implements IEventDao {
   }
 
   /**
-   * Create a event data
+   * Save a user domain event
    * @param data
    */
-  public async create(data: any): Promise<boolean> {
-    this.logger.verbose('create: ', data)
+  public async saveUserDomainEvent(data: UserDomainEvent): Promise<number> {
+    this.logger.verbose('saveUserDomainEvent: ', data)
     try {
-      const result = await this.dao.insertOne(this.collectionName, data)
-      return result === 1
+      return await this.dao.insertOne(this.collectionName, data)
     } catch (error) {
       throw new Error(error.message)
     }

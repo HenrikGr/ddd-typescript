@@ -7,12 +7,11 @@
 
 import { createClientLogger } from '@hgc-sdk/logger'
 import { baseDao } from '../../../infra/database'
-import { UsersEventSubscriber } from "./UsersEventSubscriber"
-import { MongoEventDao } from '../infra/database/implementations/MongoEventDao'
-import { SaveAuditData } from '../useCases/saveAuditData'
-
-const eventDao = new MongoEventDao(baseDao, createClientLogger('EventDao'))
-const saveAudit = new SaveAuditData(eventDao)
+import { UsersDomainEventSubscriber } from './UsersDomainEventSubscriber'
+import { MongoEventLogger } from '../infra/database/implementations/MongoEventLogger'
 
 // Subscribers
-new UsersEventSubscriber(saveAudit, createClientLogger('UsersEventSubscriber'))
+new UsersDomainEventSubscriber(
+  new MongoEventLogger(baseDao, createClientLogger('EventLogger')),
+  createClientLogger('UsersDomainEventSubscriber')
+)
