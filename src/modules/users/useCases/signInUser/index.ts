@@ -10,7 +10,7 @@ import { SignIn } from './SignIn'
 import { SignInController } from './SignInController'
 import { userRepo } from '../../repos'
 
-export const signInUserController = new SignInController(
+export const signInController = new SignInController(
   new SignIn(userRepo, createClientLogger('SingIn')),
   createClientLogger('SingInController')
 )

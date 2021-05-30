@@ -151,6 +151,7 @@ export class SignUp implements IUseCase<SignUpDTO, Promise<UseCaseResponse>> {
       if (!isSaved) {
         return left(new SignUpErrors.UnableToSaveUser(validDTO.userName.value)) as UseCaseResponse
       } else {
+
         /**
          * If user is saved to the database - dispatch a domain event
          */

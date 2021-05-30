@@ -9,7 +9,7 @@ import { ServiceLogger } from '@hgc-sdk/logger'
 import { AppError } from '../../../../core/common/AppError'
 import { Result, left, right, Either } from '../../../../core/common/Result'
 
-import { UseCase } from '../../../../core/domain/UseCase'
+import { IUseCase } from '../../../../core/domain/UseCase'
 
 import { IUserRepo } from '../../repos/userRepo'
 import { DeleteUserDTO } from './DeleteUserDTO'
@@ -33,7 +33,7 @@ type UseCaseResponse = Either<
 /**
  * Implementation of the DeleteUser use case
  */
-export class DeleteUser implements UseCase<DeleteUserDTO, Promise<UseCaseResponse>> {
+export class DeleteUser implements IUseCase<DeleteUserDTO, Promise<UseCaseResponse>> {
   /**
    * User repository
    * @private
