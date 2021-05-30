@@ -6,15 +6,17 @@
  */
 
 import { Express } from 'express'
+import session  from 'express-session'
+
 import { IAppConfiguration } from '../../config'
-import session, { Cookie } from 'express-session'
+
 import { loadSessionConfig } from './config'
 import { loadSessionStore } from './stores/MongoSessionStore'
 
 /**
  * Current user
  */
-export interface ICurrentUser {
+interface ICurrentUser {
   username: string
   email: string
   scope: string
@@ -27,11 +29,10 @@ export interface ICurrentUser {
  */
 declare module 'express-session' {
   interface SessionData {
-    [key: string]: any
-    cookie: Cookie
     user: ICurrentUser
   }
 }
+
 
 /**
  * Apply session management to express app
