@@ -13,21 +13,44 @@ import { User } from '../../domain/User'
 
 /**
  * User repository implementation for the user module
+ *
+ * @implements IUserRepo
+ * @class MongoUserRepo
  */
 export class MongoUserRepo implements IUserRepo {
+
+  /**
+   * Data Access Object to the mongo database
+   * @private
+   */
   private userDao: IUserDao
+
+  /**
+   * Repository logger
+   * @private
+   */
   private logger: ServiceLogger
 
+  /**
+   * Create a new repository instance
+   * @param userDao
+   * @param logger
+   */
   public constructor(userDao: IUserDao, logger: ServiceLogger) {
     this.userDao = userDao
     this.logger = logger
   }
 
+  /**
+   * Check if a user exist in the database
+   * @param username The username of the user
+   * @param email The email of the user
+   */
   public async exists(username: string, email?: string): Promise<User | boolean> {
     this.logger.info('exist started: ', username, email)
     const foundUser = await this.userDao.exist(username, email)
     if (foundUser) {
-      this.logger.info('exist - ended gracefully with user found')
+      this.logger.info('exist - ended gracefully with user found', foundUser.username)
       return UserMap.toDomain(foundUser)
     }
 
@@ -35,6 +58,10 @@ export class MongoUserRepo implements IUserRepo {
     return false
   }
 
+  /**
+   * Save a user to the database
+   * @param user The user entity
+   */
   public async save(user: User): Promise<boolean> {
     const createUserDTO = UserMap.toCreateUserDTO(user)
     const isUserCreated = await this.userDao.createUser(createUserDTO)
