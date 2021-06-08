@@ -6,9 +6,9 @@
  */
 
 import express from 'express'
-import { signUpUserController } from '../../../useCases/signUpUser'
+import { signUpController } from '../../../useCases/signUpUser'
 import { deleteUserController } from '../../../useCases/deleteUser'
-import { signInUserController } from '../../../useCases/signInUser'
+import { signInController } from '../../../useCases/signInUser'
 //import { getCurrentUserController } from '../../../useCases/getCurrentUser';
 //import { refreshAccessTokenController } from '../../../useCases/refreshAccessToken';
 //import { logoutController } from '../../../useCases/logout';
@@ -22,11 +22,16 @@ const userRouter = express.Router()
 /**
  * Sign up user to the application service
  */
-userRouter.post('/signup', (req, res, next) => signUpUserController.execute(req, res, next))
+userRouter.post('/signup', (req, res, next) => signUpController.execute(req, res, next))
 
+/**
+ * Sign in, create user account
+ */
+userRouter.post('/signin', (req, res, next) => signInController.execute(req, res, next))
 
-userRouter.post('/signin', (req, res, next) => signInUserController.execute(req, res, next))
-
+/**
+ * Delete user account
+ */
 userRouter.delete('/:username', (req, res, next) =>  deleteUserController.execute(req, res, next))
 
 /*
