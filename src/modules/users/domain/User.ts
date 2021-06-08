@@ -15,7 +15,6 @@ import { UserName } from './userName'
 import { UserEmail } from './userEmail'
 import { UserCredential } from './userCredential'
 import { UserScope } from './userScope'
-import { UserId } from './UserId'
 
 /**
  * User entity properties interface
@@ -127,12 +126,7 @@ export class User extends AggregateRoot<IUserProps> {
      * Add a domain event
      */
     if(!id) {
-      const meta = {
-        description: 'User entity created',
-        username: user.username.value,
-        email: user.email.value
-      }
-      const userCreatedEvent = new UserDomainEvent(user.id, UserEventType.USER_CREATED, meta)
+      const userCreatedEvent = new UserDomainEvent(UserEventType.USER_CREATED, user.id, )
       user.addDomainEvent(userCreatedEvent)
     }
 

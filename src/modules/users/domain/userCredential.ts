@@ -10,9 +10,8 @@ import { ValueObject } from '../../../core/domain/ValueObject'
 import { Result } from '../../../core/common/Result'
 import { Guard } from '../../../core/common/Guard'
 
-
 /**
- * UserCredential interface
+ * UserCredentialsProp interface
  */
 export interface ICredentialsProps {
   password: string
@@ -21,12 +20,10 @@ export interface ICredentialsProps {
 /**
  * Implements the logic to create UserCredential objects
  *
- * The object is an entity object with it's own id since
- * we are dealing with credentials outside the user
- * in the database model.
+ * @extends ValueObject
+ * @class UserCredential
  */
 export class UserCredential extends ValueObject<ICredentialsProps> {
-
   /**
    * Creates a new UserCredential instance
    * @param props
@@ -59,21 +56,20 @@ export class UserCredential extends ValueObject<ICredentialsProps> {
   public async compare(password: string) {
     return await verifyHash(password, this.value)
   }
+
   /**
-   * Factory method to create an instance of UserCredential
-   * Validates against an invalid email address format
-   * which includes undefined and null
-   * @param password
-   * @param isHashed
-   * @async
+   * Factory method to create an instance of UserCredential.
+   * Validates against an invalid password format
+   * @param password The password
+   * @param isHashed If the password is already hashed (from a database)
    */
   public static async create(password: string, isHashed?: boolean): Promise<Result<UserCredential>> {
     if (isHashed) {
       return Result.ok<UserCredential>(new UserCredential({ password: password }))
     } else {
-      const isValid = Guard.againstInvalidPasswordFormat(password, 'password')
-      if (!isValid.isSuccess) {
-        return Result.fail<UserCredential>(isValid.message)
+      const guardResult = Guard.againstInvalidPasswordFormat(password, 'password')
+      if (!guardResult.isSuccess) {
+        return Result.fail<UserCredential>(guardResult.message)
       }
 
       const hashedPassword = await this.generateHash(password)

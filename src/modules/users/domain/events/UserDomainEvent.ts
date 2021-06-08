@@ -15,24 +15,23 @@ export enum UserEventType {
 
 /**
  * Represent a domain event for user aggregate
- * @class
  */
 export class UserDomainEvent implements IDomainEvent {
-  public dateTimeOccurred: Date
-  public aggregateId: UniqueEntityID
-  public eventType: string
-  public meta: any
+  dateTimeOccurred: Date
+  eventType: UserEventType
+  aggregateId: UniqueEntityID
+  meta: object
 
   /**
    * Create a new domain event for the user module
-   * @param aggregateId
    * @param type
+   * @param aggregateId
    * @param meta
    */
-  constructor(aggregateId: UniqueEntityID, type: string, meta?: any) {
+  constructor(type: UserEventType, aggregateId: UniqueEntityID, meta: object = {}) {
     this.dateTimeOccurred = new Date()
-    this.aggregateId = aggregateId
     this.eventType = type
+    this.aggregateId = aggregateId
     this.meta = meta
   }
 }
