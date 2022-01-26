@@ -18,9 +18,9 @@ export enum UserEventType {
  */
 export class UserDomainEvent implements IDomainEvent {
   dateTimeOccurred: Date
-  eventType: UserEventType
   aggregateId: UniqueEntityID
-  meta: object
+  eventType: string
+  meta: any
 
   /**
    * Create a new domain event for the user module

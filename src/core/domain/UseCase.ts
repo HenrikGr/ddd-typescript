@@ -9,6 +9,6 @@
  * Use case interface
  * @method {execute} The use case execute method
  */
-export interface UseCase<IRequest, IResponse> {
+export interface IUseCase<IRequest, IResponse> {
   execute(request?: IRequest): Promise<IResponse> | IResponse
 }
